@@ -112,8 +112,9 @@
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database(app);
 
-        // Referência ao nó dos sensores
-        const sensoresRef = database.ref('sensores');
+        // Referências aos nós do Firebase
+        const temperaturasRef = database.ref('temperaturas');
+        const intervaloRef = database.ref('intervalo');
 
         // Elementos HTML
         const temp1Element = document.getElementById('temp1');
@@ -177,23 +178,39 @@
             },
         });
 
-        // Função para ler os dados do Firebase
+        // Função para ler as temperaturas do Firebase
         function lerTemperaturas() {
-            sensoresRef.once('value', (snapshot) => {
+            temperaturasRef.once('value', (snapshot) => {
                 const data = snapshot.val();
                 console.log("Dados recebidos:", data); // Debug: Verifique os dados recebidos
                 if (data) {
-                    // Atualiza os valores nos cards
-                    temp1Element.textContent = `${data.temperatura_1 || 0} °C`;
-                    temp2Element.textContent = `${data.temperatura_2 || 0} °C`;
-                    temp3Element.textContent = `${data.temperatura_3 || 0} °C`;
+                    // Limpar os dados anteriores no gráfico
+                    chart.data.labels = [];
+                    chart.data.datasets[0].data = [];
+                    chart.data.datasets[1].data = [];
+                    chart.data.datasets[2].data = [];
+                    timeIndex = 0;
 
-                    // Atualiza os dados no gráfico
-                    timeIndex++;
-                    chart.data.labels.push(timeIndex);
-                    chart.data.datasets[0].data.push(data.temperatura_1 || 0);
-                    chart.data.datasets[1].data.push(data.temperatura_2 || 0);
-                    chart.data.datasets[2].data.push(data.temperatura_3 || 0);
+                    // Iterar sobre os dados de cada data para atualizar as temperaturas
+                    for (const timestamp in data) {
+                        if (data.hasOwnProperty(timestamp)) {
+                            const temperaturaData = data[timestamp];
+
+                            // Atualiza os valores nos cards (última temperatura registrada)
+                            temp1Element.textContent = `${temperaturaData.agua || 0} °C`;
+                            temp2Element.textContent = `${temperaturaData.estufa || 0} °C`;
+                            temp3Element.textContent = `${temperaturaData.externa || 0} °C`;
+
+                            // Atualiza os dados no gráfico
+                            timeIndex++;
+                            chart.data.labels.push(timestamp);
+
+                            // Verifica se o valor existe antes de adicionar
+                            chart.data.datasets[0].data.push(temperaturaData.agua || null);
+                            chart.data.datasets[1].data.push(temperaturaData.estufa || null);
+                            chart.data.datasets[2].data.push(temperaturaData.externa || null);
+                        }
+                    }
                     chart.update();
                 } else {
                     alert("Erro: Nenhum dado encontrado no Firebase.");
@@ -204,17 +221,35 @@
             });
         }
 
-        // Função para atualizar os dados quando clicar no botão
+        // Função para ler o intervalo de atualização
+        function lerIntervalo() {
+            intervaloRef.once('value', (snapshot) => {
+                const intervaloData = snapshot.val();
+                console.log("Intervalo de atualização:", intervaloData); // Debug: Verifique o intervalo
+                if (intervaloData && intervaloData.intervalo) {
+                    const intervaloMinutos = intervaloData.intervalo * 60000; // Converte minutos para milissegundos
+                    console.log(`Intervalo ajustado para ${intervaloMinutos / 60000} minutos`);
+                    
+                    // Atualiza o intervalo de atualização do gráfico
+                    setInterval(lerTemperaturas, intervaloMinutos);
+                } else {
+                    console.error("Erro: Intervalo não encontrado no Firebase.");
+                }
+            }, (error) => {
+                console.error("Erro ao ler o intervalo:", error);
+                alert("Erro ao conectar com o Firebase!");
+            });
+        }
+
+        // Função para atualizar os dados ao clicar no botão
         function atualizarTemperaturas() {
             lerTemperaturas();
         }
 
-        // Atualizar automaticamente a cada 5 segundos
-        setInterval(lerTemperaturas, 60000); // 5000 ms = 5 segundos
-
         // Carregar dados ao iniciar a página
         window.onload = () => {
             lerTemperaturas();
+            lerIntervalo(); // Lê o intervalo de atualização
         };
     </script>
 </body>
