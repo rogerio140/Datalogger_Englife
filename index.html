@@ -5,12 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitor de Temperatura</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Logo na guia do navegador (favicon) -->
+    <link rel="icon" href="englife.png" type="image/png">
+
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f8f9fa;
             padding: 20px;
+            background-color: #ffffff;
         }
+
+        .content {
+            position: relative;
+        }
+
         .card {
             margin-bottom: 20px;
             border-radius: 12px;
@@ -32,10 +42,19 @@
             margin-top: 20px;
             height: 400px;
         }
+
+        .row {
+            margin-top: 30px;
+        }
+
+        /* Estilo do botão de atualização */
+        .btn-primary {
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container content">
         <h1 class="text-center my-4">Monitor de Temperatura</h1>
 
         <!-- Cards de Temperatura -->
@@ -95,11 +114,9 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Firebase v9 compat -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
     <script>
-        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAMAf30UG0YOqaxF-KgD5gfAhWhddN-5Qg",
             authDomain: "datalogeer.firebaseapp.com",
@@ -108,26 +125,17 @@
             storageBucket: "datalogeer.appspot.com",
         };
 
-        // Inicializar Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database(app);
-
-        // Referência ao nó 'temperaturas' do Firebase
         const temperaturasRef = database.ref('temperaturas');
         const intervaloRef = database.ref('intervalo');
 
-        // Elementos HTML
         const temp1Element = document.getElementById('temp1');
         const temp2Element = document.getElementById('temp2');
         const temp3Element = document.getElementById('temp3');
 
-        // Dados do gráfico
-        let temp1 = [];
-        let temp2 = [];
-        let temp3 = [];
-        let timeIndex = 0;
+        let temp1 = [], temp2 = [], temp3 = [], timeIndex = 0;
 
-        // Configuração do gráfico
         const ctx = document.getElementById('temperatureChart').getContext('2d');
         const chart = new Chart(ctx, {
             type: 'line',
@@ -163,49 +171,31 @@
                 scales: {
                     y: {
                         beginAtZero: false,
-                        title: {
-                            display: true,
-                            text: 'Temperatura (°C)',
-                        },
+                        title: { display: true, text: 'Temperatura (°C)' },
                     },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Tempo (s)',
-                        },
-                    },
+                    x: { title: { display: true, text: 'Tempo (s)' } },
                 },
             },
         });
 
-        // Função para ler as temperaturas do Firebase
         function lerTemperaturas() {
             temperaturasRef.once('value', (snapshot) => {
                 const data = snapshot.val();
-                console.log("Dados recebidos:", data); // Debug: Verifique os dados recebidos
                 if (data) {
-                    // Limpar os dados anteriores no gráfico
                     chart.data.labels = [];
-                    chart.data.datasets[0].data = [];
-                    chart.data.datasets[1].data = [];
-                    chart.data.datasets[2].data = [];
+                    chart.data.datasets.forEach(dataset => dataset.data = []);
                     timeIndex = 0;
 
-                    // Iterar sobre os dados de cada data para atualizar as temperaturas
                     for (const timestamp in data) {
                         if (data.hasOwnProperty(timestamp)) {
                             const temperaturaData = data[timestamp];
 
-                            // Atualiza os valores nos cards (última temperatura registrada)
                             temp1Element.textContent = `${temperaturaData.agua || 0} °C`;
                             temp2Element.textContent = `${temperaturaData.estufa || 0} °C`;
                             temp3Element.textContent = `${temperaturaData.externa || 0} °C`;
 
-                            // Atualiza os dados no gráfico
                             timeIndex++;
                             chart.data.labels.push(timestamp);
-
-                            // Verifica se o valor existe antes de adicionar
                             chart.data.datasets[0].data.push(temperaturaData.agua || null);
                             chart.data.datasets[1].data.push(temperaturaData.estufa || null);
                             chart.data.datasets[2].data.push(temperaturaData.externa || null);
@@ -221,35 +211,22 @@
             });
         }
 
-        // Função para ler o intervalo de atualização
         function lerIntervalo() {
             intervaloRef.once('value', (snapshot) => {
                 const intervaloData = snapshot.val();
-                console.log("Intervalo de atualização:", intervaloData); // Debug: Verifique o intervalo
                 if (intervaloData && intervaloData.intervalo) {
-                    const intervaloMinutos = intervaloData.intervalo * 60000; // Converte minutos para milissegundos
-                    console.log(`Intervalo ajustado para ${intervaloMinutos / 60000} minutos`);
-                    
-                    // Atualiza o intervalo de atualização do gráfico
-                    setInterval(lerTemperaturas, intervaloMinutos);
-                } else {
-                    console.error("Erro: Intervalo não encontrado no Firebase.");
+                    setInterval(lerTemperaturas, intervaloData.intervalo * 60000);
                 }
-            }, (error) => {
-                console.error("Erro ao ler o intervalo:", error);
-                alert("Erro ao conectar com o Firebase!");
             });
         }
 
-        // Função para atualizar os dados ao clicar no botão
         function atualizarTemperaturas() {
             lerTemperaturas();
         }
 
-        // Carregar dados ao iniciar a página
         window.onload = () => {
             lerTemperaturas();
-            lerIntervalo(); // Lê o intervalo de atualização
+            lerIntervalo();
         };
     </script>
 </body>
