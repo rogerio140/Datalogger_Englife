@@ -289,7 +289,7 @@
                     const [dataParte, horaParte] = timestamp.split('_');
                     const [ano, mes, dia] = dataParte.split('-');
                     const [hora, minuto, segundo] = horaParte.split('-');
-                    const dataFormatada = `${dia}/${mes}/${ano} ${hora}:${minuto}:${segundo}`;
+                    const dataFormatada = `${dia}/${mes}/${ano}\t${hora}:${minuto}:${segundo}`; // Adicionado tabulação aqui
 
                     const linha = `${dataFormatada}\t${tempData.agua}\t${tempData.estufa}\t${tempData.externa}`;
                     data.push(linha);
