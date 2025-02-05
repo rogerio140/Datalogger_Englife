@@ -127,8 +127,8 @@
 
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database(app);
+        const sensoresRef = database.ref('sensores');
         const temperaturasRef = database.ref('temperaturas');
-        const intervaloRef = database.ref('intervalo');
 
         const temp1Element = document.getElementById('temp1');
         const temp2Element = document.getElementById('temp2');
@@ -178,55 +178,71 @@
             },
         });
 
+        // Função para ler as temperaturas dos sensores e atualizar as caixas
+        function lerSensores() {
+            sensoresRef.once('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    // Extraindo as temperaturas dos dados
+                    const temperatura1 = data.temperatura_1 || 0; // Se não houver valor, define como 0
+                    const temperatura2 = data.temperatura_2 || 0;
+                    const temperatura3 = data.temperatura_3 || 0;
+
+                    // Atualiza as caixas de temperatura com os valores dos sensores
+                    temp1Element.textContent = `${temperatura1} °C`;
+                    temp2Element.textContent = `${temperatura2} °C`;
+                    temp3Element.textContent = `${temperatura3} °C`;
+                } else {
+                    console.log("Nenhum dado encontrado no nó sensores.");
+                }
+            }, (error) => {
+                console.error("Erro ao ler os dados dos sensores:", error);
+                alert("Erro ao conectar com o Firebase!");
+            });
+        }
+
+        // Função para ler as temperaturas do gráfico
         function lerTemperaturas() {
             temperaturasRef.once('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
+                    // Limpar os dados anteriores do gráfico
                     chart.data.labels = [];
                     chart.data.datasets.forEach(dataset => dataset.data = []);
                     timeIndex = 0;
 
+                    // Adicionar os dados ao gráfico
                     for (const timestamp in data) {
                         if (data.hasOwnProperty(timestamp)) {
                             const temperaturaData = data[timestamp];
-
-                            temp1Element.textContent = `${temperaturaData.agua || 0} °C`;
-                            temp2Element.textContent = `${temperaturaData.estufa || 0} °C`;
-                            temp3Element.textContent = `${temperaturaData.externa || 0} °C`;
-
                             timeIndex++;
+
                             chart.data.labels.push(timestamp);
                             chart.data.datasets[0].data.push(temperaturaData.agua || null);
                             chart.data.datasets[1].data.push(temperaturaData.estufa || null);
                             chart.data.datasets[2].data.push(temperaturaData.externa || null);
                         }
                     }
+
                     chart.update();
                 } else {
                     alert("Erro: Nenhum dado encontrado no Firebase.");
                 }
             }, (error) => {
-                console.error("Erro ao ler os dados:", error);
+                console.error("Erro ao ler os dados de temperaturas:", error);
                 alert("Erro ao conectar com o Firebase!");
             });
         }
 
-        function lerIntervalo() {
-            intervaloRef.once('value', (snapshot) => {
-                const intervaloData = snapshot.val();
-                if (intervaloData && intervaloData.intervalo) {
-                    setInterval(lerTemperaturas, intervaloData.intervalo * 60000);
-                }
-            });
-        }
-
         function atualizarTemperaturas() {
+            // Chama as funções para ler os dados dos sensores e atualizar o gráfico
+            lerSensores();
             lerTemperaturas();
         }
 
         window.onload = () => {
-            lerTemperaturas();
-            lerIntervalo();
+            lerSensores();  // Carrega os dados dos sensores ao inicializar a página
+            lerTemperaturas();  // Carrega os dados de temperaturas ao inicializar a página
         };
     </script>
 </body>
