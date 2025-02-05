@@ -192,6 +192,7 @@
                 },
             },
         });
+
         function processarDadosTemperatura(data) {
             // Limpar os dados anteriores do gráfico
             chart.data.labels = [];
@@ -220,6 +221,7 @@
 
             chart.update();
         }
+
         // Função para ler as temperaturas dos sensores e atualizar as caixas
         function lerSensores() {
             sensoresRef.once('value', (snapshot) => {
@@ -234,7 +236,6 @@
                     temp1Element.textContent = `${(temperatura1).toFixed(2)} °C`;
                     temp2Element.textContent = `${(temperatura2).toFixed(2)} °C`;
                     temp3Element.textContent = `${(temperatura3).toFixed(2)} °C`;
-                    //exibirNotificacao('Dados atualizados com sucesso!', 'success');
                 } else {
                     console.log("Nenhum dado encontrado no nó sensores.");
                     exibirNotificacao('Erro ao conectar com o Firebase.', 'danger');
@@ -284,45 +285,38 @@
                     const tempData = childSnapshot.val();
                     const timestamp = childSnapshot.key;
 
-                    // Conversão do timestamp (aaaa-mm-dd_hh-mm-ss → dd/mm/aaaa hh:mm:ss)
+                    // Conversão do timestamp (aaaa-mm-dd_hh-mm-ss) para um formato mais legível
                     const [dataParte, horaParte] = timestamp.split('_');
                     const [ano, mes, dia] = dataParte.split('-');
                     const [hora, minuto, segundo] = horaParte.split('-');
-                    const dataFormatada = `${dia}/${mes}/${ano}`;
-                    const horaFormatada = `${hora}:${minuto}:${segundo}`;
+                    const dataFormatada = `${dia}/${mes}/${ano} ${hora}:${minuto}:${segundo}`;
 
-                    // Adicionar os dados formatados com tabulação entre a data, hora e as temperaturas
-                    data.push(`${dataFormatada}\t${horaFormatada}\t${tempData.agua || "N/A"}\t${tempData.estufa || "N/A"}\t${tempData.externa || "N/A"}`);
+                    const linha = `${dataFormatada}\t${tempData.agua}\t${tempData.estufa}\t${tempData.externa}`;
+                    data.push(linha);
                 });
 
                 if (tipo === 'xlsx') {
-                    // Criar um arquivo XLSX
-                    const sheetData = data.map(row => row.split(/\t/)); // Transformar em array para o XLSX
-                    const ws = XLSX.utils.aoa_to_sheet(sheetData);
+                    const ws = XLSX.utils.aoa_to_sheet(data.map(item => item.split('\t')));
                     const wb = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(wb, ws, 'Temperaturas');
-                    XLSX.writeFile(wb, 'dados_temperaturas.xlsx');
+                    XLSX.writeFile(wb, 'Temperaturas.xlsx');
                 } else if (tipo === 'txt') {
-                    // Criar um arquivo TXT
-                    const txtContent = data.join('\n');
-                    const blob = new Blob([txtContent], { type: 'text/plain' });
+                    const blob = new Blob([data.join('\n')], { type: 'text/plain' });
                     const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = 'dados_temperaturas.txt';
-                    link.click();
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'temperaturas.txt';
+                    a.click();
                 }
             });
         }
-
-
-
-
-        // Inicialização
-        document.addEventListener('DOMContentLoaded', () => {
-            atualizarTemperaturas();
-        });
-
+        // Função para carregar dados automaticamente ao abrir a página
+        window.onload = function() {
+            lerSensores();
+            lerTemperaturas();
+        };
+        // Chama a função de atualização a cada 30 segundos
+        setInterval(atualizarTemperaturas, 3000);
     </script>
 </body>
 </html>
