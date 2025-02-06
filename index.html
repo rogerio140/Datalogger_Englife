@@ -5,22 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitor de Temperatura</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Logo na guia do navegador (favicon) -->
     <link rel="icon" href="englife.icon" type="image/icon">
-    
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f8f9fa;
             padding: 20px;
-            background-color: #ffffff;
         }
-
         .content {
             position: relative;
         }
-
         .card {
             margin-bottom: 20px;
             border-radius: 12px;
@@ -42,22 +36,12 @@
             margin-top: 20px;
             height: 400px;
         }
-
         .row {
             margin-top: 30px;
         }
-
-        .dark-mode {
-            background-color: #333;
-            color: #fff;
-        }
-
-        /* Estilo do botão de atualização */
         .btn-primary {
             font-size: 16px;
         }
-
-        /* Notificação de sucesso/erro */
         #notification {
             display: none;
             margin-top: 20px;
@@ -119,6 +103,18 @@
         <div class="text-center mt-4">
             <button class="btn btn-primary" onclick="atualizarTemperaturas()">Atualizar Temperaturas</button>
 
+            <!-- Dropdown para seleção de período -->
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    Selecionar Período
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('24h')">Últimas 24 horas</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('semana')">Última Semana</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('mes')">Último Mês</a></li>
+                </ul>
+            </div>
+
             <!-- Dropdown para opções de download -->
             <div class="btn-group">
                 <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -154,12 +150,15 @@
         const database = firebase.database(app);
         const sensoresRef = database.ref('sensores');
         const temperaturasRef = database.ref('temperaturas');
+        const temperaturasSemanaRef = database.ref('temperaturas_semana');
+        const temperaturasMesRef = database.ref('temperaturas_mes');
 
         const temp1Element = document.getElementById('temp1');
         const temp2Element = document.getElementById('temp2');
         const temp3Element = document.getElementById('temp3');
 
-        let temp1 = [], temp2 = [], temp3 = [], timeIndex = 0;
+        let periodoSelecionado = '24h'; // Padrão para as últimas 24 horas
+        let temp1 = [], temp2 = [], temp3 = [];
 
         const ctx = document.getElementById('temperatureChart').getContext('2d');
         const chart = new Chart(ctx, {
@@ -198,30 +197,28 @@
                         beginAtZero: false,
                         title: { display: true, text: 'Temperatura (°C)' },
                     },
-                    x: { title: { display: true, text: 'Tempo (s)' } },
+                    x: { title: { display: true, text: 'Tempo' } },
                 },
             },
         });
 
+        function selecionarPeriodo(periodo) {
+            periodoSelecionado = periodo;
+            atualizarTemperaturas();
+        }
+
         function processarDadosTemperatura(data) {
-            // Limpar os dados anteriores do gráfico
             chart.data.labels = [];
             chart.data.datasets.forEach(dataset => dataset.data = []);
 
-            // Processar cada entrada do nó 'temperaturas'
             for (const timestamp in data) {
                 if (data.hasOwnProperty(timestamp)) {
                     const temperaturaData = data[timestamp];
-
-                    // Separar a data e hora do timestamp
                     const [dataParte, horaParte] = timestamp.split('_');
                     const [ano, mes, dia] = dataParte.split('-');
                     const [hora, minuto, segundo] = horaParte.split('-');
-
-                    // Reformatar para o padrão dd/mm/aaaa hh:mm:ss
                     const dataFormatada = `${dia}/${mes}/${ano} ${hora}:${minuto}:${segundo}`;
 
-                    // Adicionar os valores ao gráfico
                     chart.data.labels.push(dataFormatada);
                     chart.data.datasets[0].data.push(temperaturaData.agua || null);
                     chart.data.datasets[1].data.push(temperaturaData.estufa || null);
@@ -232,20 +229,13 @@
             chart.update();
         }
 
-        // Função para ler as temperaturas dos sensores e atualizar as caixas
         function lerSensores() {
             sensoresRef.once('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
-                    // Extraindo as temperaturas dos dados
-                    const temperatura1 = data.temperatura_3 || 0;
-                    const temperatura2 = data.temperatura_2 || 0;
-                    const temperatura3 = data.temperatura_1 || 0;
-
-                    // Atualiza as caixas de temperatura com os valores dos sensores
-                    temp1Element.textContent = `${(temperatura1).toFixed(2)} °C`;
-                    temp2Element.textContent = `${(temperatura2).toFixed(2)} °C`;
-                    temp3Element.textContent = `${(temperatura3).toFixed(2)} °C`;
+                    temp1Element.textContent = `${(data.temperatura_3 || 0).toFixed(2)} °C`;
+                    temp2Element.textContent = `${(data.temperatura_2 || 0).toFixed(2)} °C`;
+                    temp3Element.textContent = `${(data.temperatura_1 || 0).toFixed(2)} °C`;
                 } else {
                     console.log("Nenhum dado encontrado no nó sensores.");
                     exibirNotificacao('Erro ao conectar com o Firebase.', 'danger');
@@ -256,9 +246,23 @@
             });
         }
 
-        // Ajustando a função de leitura para chamar o processamento de dados
         function lerTemperaturas() {
-            temperaturasRef.once('value', (snapshot) => {
+            let ref;
+            switch (periodoSelecionado) {
+                case '24h':
+                    ref = temperaturasRef;
+                    break;
+                case 'semana':
+                    ref = temperaturasSemanaRef;
+                    break;
+                case 'mes':
+                    ref = temperaturasMesRef;
+                    break;
+                default:
+                    ref = temperaturasRef;
+            }
+
+            ref.once('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     processarDadosTemperatura(data);
@@ -290,16 +294,29 @@
             const header = 'Data\tHora\tTemperatura Água\tTemperatura Estufa\tTemperatura Externa';
             const data = [header];
 
-            temperaturasRef.once('value', (snapshot) => {
+            let ref;
+            switch (periodoSelecionado) {
+                case '24h':
+                    ref = temperaturasRef;
+                    break;
+                case 'semana':
+                    ref = temperaturasSemanaRef;
+                    break;
+                case 'mes':
+                    ref = temperaturasMesRef;
+                    break;
+                default:
+                    ref = temperaturasRef;
+            }
+
+            ref.once('value', (snapshot) => {
                 snapshot.forEach((childSnapshot) => {
                     const tempData = childSnapshot.val();
                     const timestamp = childSnapshot.key;
-
-                    // Conversão do timestamp (aaaa-mm-dd_hh-mm-ss) para um formato mais legível
                     const [dataParte, horaParte] = timestamp.split('_');
                     const [ano, mes, dia] = dataParte.split('-');
                     const [hora, minuto, segundo] = horaParte.split('-');
-                    const dataFormatada = `${dia}/${mes}/${ano}\t${hora}:${minuto}:${segundo}`; // Adicionado tabulação aqui
+                    const dataFormatada = `${dia}/${mes}/${ano}\t${hora}:${minuto}:${segundo}`;
 
                     const linha = `${dataFormatada}\t${tempData.agua}\t${tempData.estufa}\t${tempData.externa}`;
                     data.push(linha);
@@ -309,25 +326,23 @@
                     const ws = XLSX.utils.aoa_to_sheet(data.map(item => item.split('\t')));
                     const wb = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(wb, ws, 'Temperaturas');
-                    XLSX.writeFile(wb, 'Temperaturas.xlsx');
+                    XLSX.writeFile(wb, `Temperaturas_${periodoSelecionado}.xlsx`);
                 } else if (tipo === 'txt') {
                     const blob = new Blob([data.join('\n')], { type: 'text/plain' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = 'temperaturas.txt';
+                    a.download = `temperaturas_${periodoSelecionado}.txt`;
                     a.click();
                 }
             });
         }
 
-        // Função para carregar dados automaticamente ao abrir a página
         window.onload = function() {
             lerSensores();
             lerTemperaturas();
         };
 
-        // Chama a função de atualização a cada 30 segundos
         setInterval(atualizarTemperaturas, 3000);
     </script>
 </body>
