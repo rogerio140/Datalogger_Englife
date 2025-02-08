@@ -112,7 +112,6 @@
                     <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('24h')">Últimas 24 horas</a></li>
                     <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('semana')">Última Semana</a></li>
                     <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('mes')">Último Mês</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('ano')">Último Ano</a></li>
                 </ul>
             </div>
 
@@ -153,7 +152,6 @@
         const temperaturasRef = database.ref('temperaturas');
         const temperaturasSemanaRef = database.ref('temperaturas_semana');
         const temperaturasMesRef = database.ref('temperaturas_mes');
-        const temperaturasAnoRef = database.ref('temperaturas_ano'); // Novo nó para o ano
 
         const temp1Element = document.getElementById('temp1');
         const temp2Element = document.getElementById('temp2');
@@ -260,9 +258,6 @@
                 case 'mes':
                     ref = temperaturasMesRef;
                     break;
-                case 'ano':
-                    ref = temperaturasAnoRef; // Novo caso para o ano
-                    break;
                 default:
                     ref = temperaturasRef;
             }
@@ -309,9 +304,6 @@
                     break;
                 case 'mes':
                     ref = temperaturasMesRef;
-                    break;
-                case 'ano':
-                    ref = temperaturasAnoRef; // Novo caso para o ano
                     break;
                 default:
                     ref = temperaturasRef;

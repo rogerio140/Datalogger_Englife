@@ -8,9 +8,7 @@
 #include "FS.h"  // Sistema de arquivos (como SPIFFS ou LittleFS)
 #include <TimeLib.h>  // Para manipular o tempo e facilitar comparações
 
-// Configuração do WiFi
-#define WIFI_SSID "Englife"
-#define WIFI_PASSWORD "kpq6f4716"
+
 
 // Configuração do Firebase
 #define FIREBASE_HOST "https://datalogeer-default-rtdb.firebaseio.com/"
@@ -41,7 +39,10 @@ OneWire oneWire3(ONE_WIRE_BUS3);
 DallasTemperature sensor1(&oneWire1);
 DallasTemperature sensor2(&oneWire2);
 DallasTemperature sensor3(&oneWire3);
-
+// Configuração do WiFi
+// Variáveis globais para Wi-Fi
+String wifiSSID = "";
+String wifiPassword = "";
 // Variáveis globais para intervalo e nome do arquivo
 unsigned long intervalo = 1; // Valor padrão em minutos
 String nomeArquivo = "/datalog.txt";
@@ -139,7 +140,6 @@ void mostrarRegistrosPeriodo(const String& nomeArquivo, const String& periodo) {
     file.close();
 }
 
-// Carregar configurações do arquivo
 void carregarConfiguracoes() {
     myFile = SD.open("/conf.txt");
     if (myFile) {
@@ -152,30 +152,34 @@ void carregarConfiguracoes() {
             } else if (linha.startsWith("ARQUIVO=")) {
                 nomeArquivo = linha.substring(8);
                 nomeArquivo.trim();
-
-                // Garantir que o nome do arquivo tenha extensão válida
                 if (!nomeArquivo.endsWith(".txt")) {
-                    nomeArquivo += ".txt"; // Adiciona extensão padrão
+                    nomeArquivo += ".txt";
                 }
-
-                // Garantir que o nome tenha um caminho válido
                 if (!nomeArquivo.startsWith("/")) {
-                    nomeArquivo = "/" + nomeArquivo; // Adiciona barra inicial
+                    nomeArquivo = "/" + nomeArquivo;
                 }
+            } else if (linha.startsWith("WIFI_SSID=")) {
+                wifiSSID = linha.substring(10);
+                wifiSSID.trim();
+            } else if (linha.startsWith("WIFI_PASSWORD=")) {
+                wifiPassword = linha.substring(14);
+                wifiPassword.trim();
             }
         }
         myFile.close();
         Serial.print("Intervalo de coleta: ");
         Serial.print(intervalo);
-        
         Serial.println(" minutos");
         Serial.print("Arquivo de saída: ");
         Serial.println(nomeArquivo);
+        Serial.print("Wi-Fi SSID: ");
+        Serial.println(wifiSSID);
+        Serial.print("Wi-Fi Password: ");
+        Serial.println(wifiPassword);
     } else {
         Serial.println("Arquivo de configuração não encontrado. Usando valores padrão.");
     }
 }
-
 // Função para criar um arquivo
 bool criarArquivo(const String& nomeArquivo) {
     if (SD.exists(nomeArquivo)) {
@@ -292,13 +296,28 @@ bool verificarHorarioColetaCustom(int tempoMinutos) {
 
 
 void conectarWiFi() {
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    Serial.print("Conectando ao WiFi");
-    while (WiFi.status() != WL_CONNECTED) {
-        Serial.print(".");
-        delay(1000);
+    if (wifiSSID == "" || wifiPassword == "") {
+        Serial.println("SSID ou senha do Wi-Fi não configurados. Verifique o arquivo de configuração.");
+        return;
     }
-    Serial.println("\nWiFi conectado!");
+
+    WiFi.begin(wifiSSID.c_str(), wifiPassword.c_str());
+    Serial.print("Conectando ao WiFi");
+
+    // Timeout de 10 segundos (10 tentativas com delay de 1 segundo)
+    int timeout = 10; // Número máximo de tentativas
+    while (WiFi.status() != WL_CONNECTED && timeout > 0) {
+        Serial.print(".");
+        delay(1000); // Aguarda 1 segundo
+        timeout--;   // Decrementa o contador de timeout
+    }
+
+    // Verifica se a conexão foi estabelecida
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.println("\nWiFi conectado!");
+    } else {
+        Serial.println("\nFalha ao conectar ao WiFi após 10 segundos. Verifique as credenciais ou a rede.");
+    }
 }
 
 void configurarFirebase() {
@@ -350,13 +369,17 @@ void enviarDadosFirebase(const String& linha, const String& periodo) {
         String caminhoTemperaturaExterna = caminhoBase + dataHora + "/externa";
        
         // Enviar os dados para o Firebase
+        delay(100);
         enviarTemperatura(caminhoTemperaturaAgua.c_str(), tempAgua);
+        delay(100);
         enviarTemperatura(caminhoTemperaturaEstufa.c_str(), tempEstufa);
+        delay(100);
         enviarTemperatura(caminhoTemperaturaExterna.c_str(), tempExterna);
     } else {
         Serial.println("Erro ao processar a linha de dados.");
     }
 }
+
 
 
 void limparCaminho(const char* caminho) {
@@ -373,17 +396,19 @@ void limparCaminho(const char* caminho) {
 }
 
 void enviarTemperatura(const char* caminho, float valor) {
-    if (Firebase.setFloat(firebaseData, caminho, valor)) {
-        Serial.print(caminho);
-        Serial.println(" enviada com sucesso!");
-    } else {
-        Serial.print("Erro ao enviar ");
-        Serial.print(caminho);
-        Serial.print(": ");
-        Serial.println(firebaseData.errorReason());
+    int max_tentativas = 3; // Número máximo de tentativas
+    int delay_entre_tentativas = 2000; // Delay entre tentativas (5 segundos)
+
+    for (int tentativa = 1; tentativa <= max_tentativas; tentativa++) {
+        if (Firebase.setFloat(firebaseData, caminho, valor)) {
+            return; // Sai da função se o envio for bem-sucedido
+        } else {
+            if (tentativa < max_tentativas) {
+                delay(delay_entre_tentativas); // Aguarda antes de tentar novamente
+            }
+        }
     }
 }
-
 void setup() {
     Serial.begin(115200);
 
@@ -426,7 +451,7 @@ void setup() {
 
     // Conectar ao Wi-Fi
     conectarWiFi();
-
+    
     // Configurar o Firebase
     configurarFirebase();
 
@@ -439,44 +464,77 @@ void setup() {
     mostrarRegistrosPeriodo(nomeArquivo, "semana"); // Últimos 7 dias
     limparCaminho("/temperaturas_mes/");
     mostrarRegistrosPeriodo(nomeArquivo, "mes"); // Últimos 30 dias
-    limparCaminho("/temperaturas_ano/");
-    mostrarRegistrosPeriodo(nomeArquivo, "ano"); // Últimos 30 dias
+    //limparCaminho("/temperaturas_ano/");
+    //mostrarRegistrosPeriodo(nomeArquivo, "ano"); // Últimos 30 dias
     ultimaColeta = rtc.now();
     ultimoEnvio = rtc.now();
+    ultimaColetaSemanal= rtc.now();
+    ultimaColetaMensal= rtc.now();
 }
 void loop() {
     DateTime agora = rtc.now();
 
-    // Coleta e envio diário (24h)
+    // Verifica se é hora de uma nova coleta diária (24h)
     if (verificarHorarioColetaCustom(intervalo) && agora != ultimoEnvio) {
         Serial.println("Hora de realizar uma nova coleta diária!");
+
+        // Tenta reconectar ao Wi-Fi se não estiver conectado
+        if (WiFi.status() != WL_CONNECTED) {
+            Serial.println("WiFi desconectado. Tentando reconectar...");
+            conectarWiFi();
+        }
+
+        // Se o Wi-Fi estiver conectado, realiza as operações
         if (WiFi.status() == WL_CONNECTED) {
             registrarLeituras();
             enviarLeituras();
         }
+
         limparCaminho("/temperaturas/");
         mostrarRegistrosPeriodo(nomeArquivo, "24h"); // Últimas 24 horas
         limparCaminho("/temperaturas_semana/");
         mostrarRegistrosPeriodo(nomeArquivo, "semana"); // Últimos 7 dias
-        limparCaminho("/temperaturas_mes/");
-        mostrarRegistrosPeriodo(nomeArquivo, "mes"); // Últimos 30 dias
-        limparCaminho("/temperaturas_ano/");
-        mostrarRegistrosPeriodo(nomeArquivo, "ano"); // Últimos 30 dias
-        
         ultimoEnvio = agora;
     }
-    // Coleta de dados independente do envio
-    if (verificarHorarioColetaCustom(tempoPersonalizado) && agora != ultimaColeta) {
-        
 
+    // Verifica se é hora de uma nova coleta semanal
+    if (verificarHorarioColetaCustom(10080) && agora != ultimaColetaSemanal) {
+        Serial.println("Hora de realizar uma nova coleta semanal!");
+
+        // Tenta reconectar ao Wi-Fi se não estiver conectado
         if (WiFi.status() != WL_CONNECTED) {
-            Serial.println("Não conectado ao WiFi.");
-        } else {
-            //limparCaminho("temperaturas");
+            Serial.println("WiFi desconectado. Tentando reconectar...");
+            conectarWiFi();
+        }
+
+        // Se o Wi-Fi estiver conectado, realiza as operações
+        if (WiFi.status() == WL_CONNECTED) {
+            registrarLeituras();
             enviarLeituras();
+        }
+
+ 
+        limparCaminho("/temperaturas_mes/");
+        mostrarRegistrosPeriodo(nomeArquivo, "mes"); // Últimos 30 dias
+        ultimaColetaSemanal = agora;
+    }
+
+
+    // Verifica se é hora de uma coleta personalizada
+    if (verificarHorarioColetaCustom(tempoPersonalizado) && agora != ultimaColeta) {
+        // Tenta reconectar ao Wi-Fi se não estiver conectado
+        if (WiFi.status() != WL_CONNECTED) {
+            Serial.println("WiFi desconectado. Tentando reconectar...");
+            conectarWiFi();
+        }
+
+        // Se o Wi-Fi estiver conectado, realiza as operações
+        if (WiFi.status() == WL_CONNECTED) {
+            enviarLeituras();
+        } else {
+            Serial.println("Não conectado ao WiFi. Dados não enviados.");
         }
 
         ultimaColeta = agora;
     }
 }
-
