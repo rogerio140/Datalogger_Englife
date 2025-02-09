@@ -488,17 +488,18 @@ void loop() {
         if (WiFi.status() == WL_CONNECTED) {
             registrarLeituras();
             enviarLeituras();
+            limparCaminho("/temperaturas/");
+            mostrarRegistrosPeriodo(nomeArquivo, "24h"); // Últimas 24 horas
+            limparCaminho("/temperaturas_semana/");
+            mostrarRegistrosPeriodo(nomeArquivo, "semana"); // Últimos 7 dias
         }
 
-        limparCaminho("/temperaturas/");
-        mostrarRegistrosPeriodo(nomeArquivo, "24h"); // Últimas 24 horas
-        limparCaminho("/temperaturas_semana/");
-        mostrarRegistrosPeriodo(nomeArquivo, "semana"); // Últimos 7 dias
+        
         ultimoEnvio = agora;
     }
 
     // Verifica se é hora de uma nova coleta semanal
-    if (verificarHorarioColetaCustom(10080) && agora != ultimaColetaSemanal) {
+    if (verificarHorarioColetaCustom(24*60) && agora != ultimaColetaSemanal) {
         Serial.println("Hora de realizar uma nova coleta semanal!");
 
         // Tenta reconectar ao Wi-Fi se não estiver conectado
@@ -509,13 +510,14 @@ void loop() {
 
         // Se o Wi-Fi estiver conectado, realiza as operações
         if (WiFi.status() == WL_CONNECTED) {
-            registrarLeituras();
+            //registrarLeituras();
             enviarLeituras();
+            limparCaminho("/temperaturas_mes/");
+            mostrarRegistrosPeriodo(nomeArquivo, "mes"); // Últimos 30 dias
         }
 
  
-        limparCaminho("/temperaturas_mes/");
-        mostrarRegistrosPeriodo(nomeArquivo, "mes"); // Últimos 30 dias
+        
         ultimaColetaSemanal = agora;
     }
 
