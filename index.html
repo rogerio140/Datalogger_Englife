@@ -14,14 +14,29 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(160deg, #fbfbfc 30%, #abd8fa 50%);
+            background: linear-gradient(160deg, #ffffff 30%, #7fc5fa 50%);
             z-index: 9999;
             display: flex;
             justify-content: center;
             align-items: center;
             transition: opacity 1s ease-in-out;
         }
+        .card, #chart-container {
+        background: rgba(255, 255, 255, 0.4) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
 
+    .gradient-bg {
+        background: linear-gradient(
+            135deg,
+            rgba(176, 224, 255, 0.3) 0%,
+            rgba(240, 248, 255, 0.2) 100%
+        );
+        padding: 20px;
+        border-radius: 15px;
+        margin-bottom: 25px;
+    }
         #splash-screen img {
             width: 350px;
             animation: 
@@ -108,6 +123,20 @@
             display: none;
             margin-top: 20px;
         }
+        /* Ajuste no body para o gradiente principal */
+    body {
+        background: linear-gradient(
+            to bottom right,
+            #e6f4ff,
+            #227ebb
+        );
+        background-attachment: fixed;
+    }
+
+    /* Ajuste nas cores do texto para melhor contraste */
+    .card-title, .card-value {
+        color: #2c3e50 !important;
+    }
     </style>
 </head>
 <body>
@@ -159,6 +188,7 @@
                 </div>
             </div>
     
+            <!-- Gráfico -->
             <!-- Gráfico -->
             <div class="card">
                 <div class="card-body">
