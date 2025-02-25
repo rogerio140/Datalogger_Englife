@@ -137,63 +137,6 @@
     .card-title, .card-value {
         color: #2c3e50 !important;
     }
-
-
-
-
-
-    /* Alertas individuais */
-    .alert-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            max-width: 300px;
-        }
-
-        .sensor-alert {
-            margin-bottom: 10px;
-            animation: alertSlide 0.5s ease-out;
-            border-left: 4px solid;
-            backdrop-filter: blur(5px);
-            background: rgba(255, 255, 255, 0.9) !important;
-        }
-
-        @keyframes alertSlide {
-            from { transform: translateX(100%); }
-            to { transform: translateX(0); }
-        }
-
-        .card.alert-high {
-            border: 2px solid #dc3545 !important;
-            animation: alert-pulse 1.5s infinite;
-        }
-
-        .card.alert-low {
-            border: 2px solid #ffc107 !important;
-            animation: alert-pulse 1.5s infinite;
-        }
-
-        @keyframes alert-pulse {
-            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
-        }
-
-        .config-panel {
-            background: rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 20px;
-            display: none;
-        }
-
-
-
-
-
     </style>
 </head>
 <body>
@@ -287,83 +230,6 @@
             <!-- Notificação -->
             <div id="notification" class="alert alert-success" role="alert"></div>
         </div>
-
-
-        <!-- Adicione isto após a notificação -->
-    <div id="alertContainer" class="alert-container"></div>
-
-    <!-- Botão e Painel de Configuração -->
-    <div class="text-center mt-3">
-        <button class="btn btn-secondary" onclick="toggleConfig()">
-            ⚙️ Configurar Alertas
-        </button>
-    </div>
-
-    <div class="config-panel" id="configPanel">
-        <h4 class="text-center mb-4">Configuração de Limites</h4>
-        <div class="row">
-            <!-- Configuração para Água -->
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Água</h5>
-                        <div class="mb-3">
-                            <label>Máxima (°C)</label>
-                            <input type="number" step="0.1" id="maxAgua" class="form-control">
-                        </div>
-                        <div class="mb-3">
-                            <label>Mínima (°C)</label>
-                            <input type="number" step="0.1" id="minAgua" class="form-control">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- Configuração para Ar Estufa -->
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Ar Estufa</h5>
-                        <div class="mb-3">
-                            <label>Máxima (°C)</label>
-                            <input type="number" step="0.1" id="maxEstufa" class="form-control">
-                        </div>
-                        <div class="mb-3">
-                            <label>Mínima (°C)</label>
-                            <input type="number" step="0.1" id="minEstufa" class="form-control">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- Configuração para Ar Externo -->
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Ar Externo</h5>
-                        <div class="mb-3">
-                            <label>Máxima (°C)</label>
-                            <input type="number" step="0.1" id="maxExterno" class="form-control">
-                        </div>
-                        <div class="mb-3">
-                            <label>Mínima (°C)</label>
-                            <input type="number" step="0.1" id="minExterno" class="form-control">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="text-center mt-4">
-            <button class="btn btn-primary" onclick="salvarConfig()">Salvar Configurações</button>
-        </div>
-
-
-
-
-
-
-
-
-
-
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
@@ -403,7 +269,6 @@
         const temperaturasRef = database.ref('temperaturas');
         const temperaturasSemanaRef = database.ref('temperaturas_semana');
         const temperaturasMesRef = database.ref('temperaturas_mes');
-        const thresholdsRef = database.ref('alert_thresholds');
 
         const temp1Element = document.getElementById('temp1');
         const temp2Element = document.getElementById('temp2');
@@ -411,11 +276,6 @@
 
         let periodoSelecionado = '24h'; // Padrão para as últimas 24 horas
         let temp1 = [], temp2 = [], temp3 = [];
-        let alertThresholds = {
-            agua: { max: 30, min: 10 },
-            estufa: { max: 40, min: 15 },
-            externa: { max: 35, min: 5 }
-        };
 
         const ctx = document.getElementById('temperatureChart').getContext('2d');
         const chart = new Chart(ctx, {
@@ -493,7 +353,6 @@
                     temp1Element.textContent = `${(data.temperatura_3 || 0).toFixed(2)} °C`;
                     temp2Element.textContent = `${(data.temperatura_2 || 0).toFixed(2)} °C`;
                     temp3Element.textContent = `${(data.temperatura_1 || 0).toFixed(2)} °C`;
-                    verificarAlertas(data);
                 } else {
                     console.log("Nenhum dado encontrado no nó sensores.");
                     exibirNotificacao('Erro ao conectar com o Firebase.', 'danger');
@@ -600,113 +459,6 @@
             lerSensores();
             lerTemperaturas();
         };
-
-        // Funções de Configuração
-        function toggleConfig() {
-            const panel = document.getElementById('configPanel');
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        }
-
-        function carregarConfig() {
-            thresholdsRef.on('value', (snapshot) => {
-                if (snapshot.exists()) {
-                    alertThresholds = snapshot.val();
-                    // Atualizar inputs
-                    document.getElementById('maxAgua').value = alertThresholds.agua.max;
-                    document.getElementById('minAgua').value = alertThresholds.agua.min;
-                    document.getElementById('maxEstufa').value = alertThresholds.estufa.max;
-                    document.getElementById('minEstufa').value = alertThresholds.estufa.min;
-                    document.getElementById('maxExterno').value = alertThresholds.externa.max;
-                    document.getElementById('minExterno').value = alertThresholds.externa.min;
-                }
-            });
-        }
-
-        function salvarConfig() {
-            const newConfig = {
-                agua: {
-                    max: parseFloat(document.getElementById('maxAgua').value),
-                    min: parseFloat(document.getElementById('minAgua').value)
-                },
-                estufa: {
-                    max: parseFloat(document.getElementById('maxEstufa').value),
-                    min: parseFloat(document.getElementById('minEstufa').value)
-                },
-                externa: {
-                    max: parseFloat(document.getElementById('maxExterno').value),
-                    min: parseFloat(document.getElementById('minExterno').value)
-                }
-            };
-
-            thresholdsRef.set(newConfig)
-                .then(() => exibirNotificacao('Configurações salvas com sucesso!', 'success'))
-                .catch((error) => exibirNotificacao('Erro ao salvar: ' + error.message, 'danger'));
-        }
-
-        // Sistema de Alertas
-        function verificarAlertas(data) {
-            const alertContainer = document.getElementById('alertContainer');
-            alertContainer.innerHTML = '';
-
-            const sensors = [
-                { id: 'temp1', value: data.temperatura_3, name: 'Água', type: 'agua' },
-                { id: 'temp2', value: data.temperatura_2, name: 'Ar Estufa', type: 'estufa' },
-                { id: 'temp3', value: data.temperatura_1, name: 'Ar Externo', type: 'externa' }
-            ];
-
-            sensors.forEach(sensor => {
-                const card = document.getElementById(sensor.id);
-                card.classList.remove('alert-high', 'alert-low');
-
-                if (sensor.value > alertThresholds[sensor.type].max) {
-                    criarAlerta(sensor, 'max');
-                    card.classList.add('alert-high');
-                } else if (sensor.value < alertThresholds[sensor.type].min) {
-                    criarAlerta(sensor, 'min');
-                    card.classList.add('alert-low');
-                }
-            });
-
-            function criarAlerta(sensor, tipo) {
-                const alertType = tipo === 'max' ? 'danger' : 'warning';
-                const message = tipo === 'max' 
-                    ? `${sensor.name} acima do máximo! (${sensor.value.toFixed(1)}°C > ${alertThresholds[sensor.type].max}°C)`
-                    : `${sensor.name} abaixo do mínimo! (${sensor.value.toFixed(1)}°C < ${alertThresholds[sensor.type].min}°C)`;
-
-                const alertDiv = document.createElement('div');
-                alertDiv.className = `alert alert-${alertType} sensor-alert`;
-                alertDiv.innerHTML = `
-                    <span>⚠️ ${message}</span>
-                    <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
-                `;
-                alertContainer.appendChild(alertDiv);
-
-                // Notificação do sistema
-                if (Notification.permission === "granted") {
-                    new Notification(`Alerta: ${sensor.name}`, { 
-                        body: message,
-                        icon: 'englife.icon'
-                    });
-                }
-            }
-        }
-
-        // Inicialização
-        window.onload = function() {
-            lerSensores();
-            lerTemperaturas();
-            carregarConfig();
-            
-            if(Notification.permission !== "granted") {
-                Notification.requestPermission();
-            }
-        };
-
-        // Resto do código mantido igual (gráfico, downloads, etc)
-        setInterval(atualizarTemperaturas, 3000);
-
-
-
 
         setInterval(atualizarTemperaturas, 3000);
     </script>
