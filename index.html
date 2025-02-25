@@ -224,33 +224,33 @@
             </div>
     
             <!-- Botões -->
-            <div class="text-center mt-4">
-                <button class="btn btn-primary" onclick="atualizarTemperaturas()">Atualizar Temperaturas</button>
-    
-                <!-- Dropdown para seleção de período -->
-                <div class="btn-group">
-                    <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                        Selecionar Período
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('24h')">Últimas 24 horas</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('semana')">Última Semana</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('mes')">Último Mês</a></li>
-                    </ul>
-                </div>
-    
-                <!-- Dropdown para opções de download -->
-                <div class="btn-group">
-                    <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                        Baixar Dados
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" onclick="baixarDados('xlsx')">Baixar em XLSX</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="baixarDados('txt')">Baixar em TXT</a></li>
-                    </ul>
-                </div>
-            </div>
-        
+<div class="text-center mt-4">
+    <button class="btn btn-primary" style="min-width: 200px;" onclick="atualizarTemperaturas()">Atualizar Temperaturas</button>
+
+    <!-- Dropdown para seleção de período -->
+    <div class="btn-group" style="min-width: 200px;">
+        <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            Selecionar Período
+        </button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('24h')">Últimas 24 horas</a></li>
+            <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('semana')">Última Semana</a></li>
+            <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('mes')">Último Mês</a></li>
+        </ul>
+    </div>
+
+    <!-- Dropdown para opções de download -->
+    <div class="btn-group" style="min-width: 200px;">
+        <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            Baixar Dados
+        </button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" onclick="baixarDados('xlsx')">Baixar em XLSX</a></li>
+            <li><a class="dropdown-item" href="#" onclick="baixarDados('txt')">Baixar em TXT</a></li>
+        </ul>
+    </div>
+</div>
+
             
 
         <div class="config-panel" id="configPanel">
