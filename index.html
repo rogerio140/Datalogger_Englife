@@ -236,6 +236,7 @@
             <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('24h')">Últimas 24 horas</a></li>
             <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('semana')">Última Semana</a></li>
             <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('mes')">Último Mês</a></li>
+            <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('ano')">Registro completo</a></li>
         </ul>
     </div>
 
@@ -394,6 +395,7 @@
         const temperaturasRef = database.ref('temperaturas');
         const temperaturasSemanaRef = database.ref('temperaturas_semana');
         const temperaturasMesRef = database.ref('temperaturas_mes');
+        const temperaturasAnoRef = database.ref('temperaturas_ano'); // Adicione esta linha com as outras refs
           // Adicione após a inicialização do Firebase
         const thresholdsRef = database.ref('alert_thresholds');
         const temp1Element = document.getElementById('temp1');
@@ -470,6 +472,7 @@
                         },
                         x: { title: { display: true, text: 'Tempo' } },
                     },
+                    
                     plugins: {
                         legend: {
                             display: true,
@@ -543,6 +546,10 @@
                     break;
                 default:
                     ref = temperaturasRef;
+                    case 'ano': // Novo caso
+                    ref = temperaturasAnoRef;
+                    break;
+                
             }
 
             ref.once('value', (snapshot) => {
@@ -587,6 +594,9 @@
                     break;
                 case 'mes':
                     ref = temperaturasMesRef;
+                    break;
+                case 'ano': // Novo caso
+                    ref = temperaturasAnoRef;
                     break;
                 default:
                     ref = temperaturasRef;
