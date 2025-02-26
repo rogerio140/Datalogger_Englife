@@ -159,7 +159,18 @@
     50% { transform: scale(1.2); opacity: 0.8; }
     100% { transform: scale(1); opacity: 1; }
 }
+.chart-controls {
+    background: rgba(255, 255, 255, 0.3);
+    padding: 10px;
+    border-radius: 8px;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
 
+.form-check-input:checked {
+    background-color: #227ebb;
+    border-color: #227ebb;
+}
 
     </style>
 </head>
@@ -213,6 +224,7 @@
             </div>
     
             <!-- Gráfico -->
+            
             <!-- Gráfico -->
             <div class="card">
                 <div class="card-body">
@@ -222,7 +234,20 @@
                     </div>
                 </div>
             </div>
-    
+            <div class="chart-controls mb-3">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="toggleAgua" checked onclick="toggleDataset(0)">
+                    <label class="form-check-label" for="toggleAgua" style="color: blue;">Água</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="toggleEstufa" checked onclick="toggleDataset(1)">
+                    <label class="form-check-label" for="toggleEstufa" style="color: green;">Ar Estufa</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="toggleExterno" checked onclick="toggleDataset(2)">
+                    <label class="form-check-label" for="toggleExterno" style="color: orange;">Ar Externo</label>
+                </div>
+            </div>
             <!-- Botões -->
 <div class="text-center mt-4">
     <button class="btn btn-primary" style="min-width: 200px;" onclick="atualizarTemperaturas()">Atualizar Temperaturas</button>
@@ -409,6 +434,14 @@
                     },
                     x: { title: { display: true, text: 'Tempo' } },
                 },
+                plugins: {
+                    legend: {
+                        onClick: (e, legendItem, legend) => {
+                            const index = legendItem.datasetIndex;
+                            toggleDataset(index);
+                        }
+                    }
+                }
             },
         });
 
@@ -549,7 +582,15 @@
             });
         }
 
-
+        function toggleDataset(index) {
+            const meta = chart.getDatasetMeta(index);
+            meta.hidden = !meta.hidden;
+            chart.update();
+            
+            // Atualiza o estado do checkbox
+            const checkboxes = document.querySelectorAll('.form-check-input');
+            checkboxes[index].checked = !meta.hidden;
+        }
       
 
         // Funções de Configuração
