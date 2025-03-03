@@ -363,7 +363,11 @@
             </div>
         </div>
           
-
+    <!-- Adicionar input para variacaoMax -->
+    <div class="mb-3">
+        <label>Variação Máxima Permitida (°C)</label>
+        <input type="number" step="0.1" id="variacaoMax" class="form-control" value="1.5">
+    </div>    
     </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -717,7 +721,6 @@
         }
     });
 }
-
 let historicalData = [];
 
 async function prepareData() {
@@ -725,142 +728,151 @@ async function prepareData() {
     const rawData = snapshot.val();
     
     historicalData = [];
+    
     for (const timestamp in rawData) {
         const entry = rawData[timestamp];
-        if(entry.agua && entry.estufa && entry.externa) {
-            historicalData.push({
-                timestamp: new Date(timestamp.replace('_', 'T').replace(/-/g, '/')),
-                agua: entry.agua,
-                estufa: entry.estufa,
-                externa: entry.externa
-            });
-        }
+        const [datePart, timePart] = timestamp.split('_');
+        const [year, month, day] = datePart.split('-');
+        const [hour, minute, second] = timePart.split('-');
+        
+        historicalData.push({
+            timestamp: new Date(year, month-1, day, hour, minute, second),
+            agua: parseFloat(entry.agua),
+            estufa: parseFloat(entry.estufa),
+            externa: parseFloat(entry.externa)
+        });
     }
     
-    // Ordenar por timestamp
     historicalData.sort((a, b) => a.timestamp - b.timestamp);
 }
 
-
-
-function runAnalysis() {
-    prepareData().then(() => {
-        // Verificação robusta de dados
-        if (!historicalData || historicalData.length < 20) {
-            document.getElementById('regressionResults').innerHTML = 
-                '<div class="alert alert-warning">Mínimo de 20 registros necessários para análise</div>';
+async function runAnalysis() {
+    try {
+        await prepareData();
+        
+        // Verificar dados
+        if (historicalData.length < 20) {
+            showError('Mínimo de 20 registros para análise');
             return;
         }
 
-        // Preparar dados corretamente
-        const dataPoints = historicalData.map(d => [
-            Number(d.externa),
-            Number(d.estufa),
-            Number(d.agua)
-        ]);
+        // 1. Calcular variações
+        const variations = calculateVariations(historicalData);
 
-        // Executar regressão com tratamento de erro
-        let result;
-        try {
-            result = regression.linear(dataPoints, {
-                precision: 6,
-                order: 2
-            });
-        } catch (e) {
-            console.error('Erro na regressão:', e);
-            document.getElementById('regressionResults').innerHTML = 
-                '<div class="alert alert-danger">Erro no cálculo da regressão</div>';
-            return;
-        }
+        // 2. Realizar regressões
+        const coefAgua = olsRegression(variations.Var_Externa, variations.Var_Agua);
+        const coefInterna = olsRegression(variations.Var_Externa, variations.Var_Interna);
 
-        // Extração segura dos coeficientes
-        const coef = result.equation || [0, 0, 0];
-        const coeficientes = {
-            externa: Number(coef[0]) || 0,
-            estufa: Number(coef[1]) || 0,
-            intercept: Number(coef[2]) || 0
+        // 3. Calcular correlação cruzada
+        const lag = calculateCrossCorrelation(historicalData.map(d => d.externa), 
+                                            historicalData.map(d => d.agua));
+
+        // 4. Calcular intervalos
+        const intervaloMedio = calculateAverageInterval(historicalData);
+        
+        // 5. Calcular resultados finais
+        const variacaoMax = 1.5; // Substituir por valor do Firebase
+        const resultados = {
+            variacaoAgua: 1 / coefAgua,
+            variacaoInterna: 1 / coefInterna,
+            tempoReflexao: variacaoMax * coefAgua * intervaloMedio,
+            intervaloMedio,
+            unidade: 'minutos'
         };
 
-        // Cálculo seguro da sensibilidade
-        const calcSensibilidade = (valor) => {
-            if (typeof valor !== 'number' || valor === 0) return 'N/A';
-            return (1 / valor).toFixed(2);
-        };
+        displayResults(resultados);
 
-        const sensitivity = {
-            externa: calcSensibilidade(coeficientes.externa),
-            estufa: calcSensibilidade(coeficientes.estufa)
-        };
+    } catch (error) {
+        showError(error.message);
+    }
+}
+function calculateVariations(data) {
+    const variations = {
+        Var_Agua: [],
+        Var_Interna: [],
+        Var_Externa: []
+    };
 
-        // Exibição segura dos resultados
-        const formatNumber = (num) => 
-            typeof num === 'number' ? num.toFixed(2) : 'N/A';
+    for (let i = 1; i < data.length; i++) {
+        variations.Var_Agua.push(data[i].agua - data[i-1].agua);
+        variations.Var_Interna.push(data[i].estufa - data[i-1].estufa);
+        variations.Var_Externa.push(data[i].externa - data[i-1].externa);
+    }
 
-        const resultsHTML = `
-            <h6>Variação necessária para 1°C na água:</h6>
-            <ul>
-                <li>Temperatura Externa: ${sensitivity.externa}°C</li>
-                <li>Temperatura Estufa: ${sensitivity.estufa}°C</li>
-            </ul>
-            <small class="text-muted">
-                Equação: Água = 
-                ${formatNumber(coeficientes.externa)}*Externa + 
-                ${formatNumber(coeficientes.estufa)}*Estufa + 
-                ${formatNumber(coeficientes.intercept)}
-            </small>
-        `;
-
-        document.getElementById('regressionResults').innerHTML = resultsHTML;
-    }).catch(error => {
-        console.error('Erro geral:', error);
-        document.getElementById('regressionResults').innerHTML = 
-            '<div class="alert alert-danger">Erro na análise dos dados</div>';
-    });
+    return variations;
 }
 
-// Função auxiliar para cálculo de correlação
-function calculateCorrelation(x, y) {
-    const n = x.length;
-    const sum_x = x.reduce((a, b) => a + b, 0);
-    const sum_y = y.reduce((a, b) => a + b, 0);
-    const sum_xy = x.reduce((a, _, i) => a + (x[i] * y[i]), 0);
-    const sum_x2 = x.reduce((a, b) => a + (b * b), 0);
-    const sum_y2 = y.reduce((a, b) => a + (b * b), 0);
+function olsRegression(X, Y) {
+    const sumX = X.reduce((a, b) => a + b, 0);
+    const sumY = Y.reduce((a, b) => a + b, 0);
+    const sumXY = X.reduce((a, _, i) => a + (X[i] * Y[i]), 0);
+    const sumX2 = X.reduce((a, b) => a + (b * b), 0);
+
+    const n = X.length;
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
     
-    return (n * sum_xy - sum_x * sum_y) / 
-           Math.sqrt((n * sum_x2 - sum_x * sum_x) * (n * sum_y2 - sum_y * sum_y));
+    return slope;
 }
 
-// Função de correlação manual para substituir math.corr
-function calculateTimeLag(x, y, maxLag = 10) {
-    const meanX = math.mean(x);
-    const meanY = math.mean(y);
-    const stdX = math.std(x);
-    const stdY = math.std(y);
-    
+function calculateCrossCorrelation(externa, agua, maxLag = 24) {
     let bestLag = 0;
-    let bestCorrelation = -Infinity;
+    let maxCorr = -Infinity;
 
-    for(let lag = 0; lag <= maxLag; lag++) {
-        const shiftedX = x.slice(lag);
-        const shiftedY = y.slice(0, y.length - lag);
+    for (let lag = 0; lag <= maxLag; lag++) {
+        const shiftedExterna = externa.slice(lag);
+        const shiftedAgua = agua.slice(0, agua.length - lag);
         
-        let sum = 0;
-        for(let i = 0; i < shiftedX.length; i++) {
-            sum += (shiftedX[i] - meanX) * (shiftedY[i] - meanY);
-        }
+        const corr = pearsonCorrelation(shiftedExterna, shiftedAgua);
         
-        const correlation = sum / (shiftedX.length * stdX * stdY);
-        
-        if(correlation > bestCorrelation) {
-            bestCorrelation = correlation;
+        if (corr > maxCorr) {
+            maxCorr = corr;
             bestLag = lag;
         }
     }
-    
+
     return bestLag;
 }
 
+function pearsonCorrelation(x, y) {
+    const n = x.length;
+    const meanX = x.reduce((a, b) => a + b, 0) / n;
+    const meanY = y.reduce((a, b) => a + b, 0) / n;
+    
+    let numerator = 0;
+    let denominatorX = 0;
+    let denominatorY = 0;
+
+    for (let i = 0; i < n; i++) {
+        numerator += (x[i] - meanX) * (y[i] - meanY);
+        denominatorX += Math.pow(x[i] - meanX, 2);
+        denominatorY += Math.pow(y[i] - meanY, 2);
+    }
+
+    return numerator / Math.sqrt(denominatorX * denominatorY);
+}
+
+function calculateAverageInterval(data) {
+    let total = 0;
+    for (let i = 1; i < data.length; i++) {
+        total += data[i].timestamp - data[i-1].timestamp;
+    }
+    return (total / (data.length - 1)) / (1000 * 60); // Converter para minutos
+}
+function displayResults(resultados) {
+    const html = `
+        <div class="alert alert-info">
+            <h5>Resultados da Análise:</h5>
+            <ul>
+                <li>Variação externa necessária para 1°C na água: ${resultados.variacaoAgua.toFixed(2)}°C</li>
+                <li>Variação externa necessária para 1°C na estufa: ${resultados.variacaoInterna.toFixed(2)}°C</li>
+                <li>Tempo de reflexão água: ${resultados.tempoReflexao.toFixed(2)} ${resultados.unidade}</li>
+                <li>Intervalo médio entre medições: ${resultados.intervaloMedio.toFixed(2)} ${resultados.unidade}</li>
+            </ul>
+        </div>
+    `;
+    
+    document.getElementById('regressionResults').innerHTML = html;
+}
 
 
         
