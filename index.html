@@ -248,8 +248,15 @@
     
             <!-- Botões -->
 <div class="text-center mt-4">
-    <button class="btn btn-primary" style="min-width: 200px;" onclick="atualizarTemperaturas()">Atualizar Temperaturas</button>
-
+    
+    
+    <div class="btn-group" style="min-width: 200px;">
+        <input type="month" id="monthPicker" class="form-control" 
+               onchange="atualizarPorMes()"
+               min="2023-01" 
+               max="2025-12"
+               title="Selecionar mês específico">
+    </div>
     <!-- Dropdown para seleção de período -->
     <div class="btn-group" style="min-width: 200px;">
         <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -439,7 +446,13 @@
         const temp2Element = document.getElementById('temp2');
         const temp3Element = document.getElementById('temp3');
         
-        
+        const dbRefs = {
+            '24h': database.ref('temperaturas'),
+            'semana': database.ref('temperaturas_semana'),
+            'mes': database.ref('temperaturas_mes'),
+            'ano': database.ref('temperaturas_ano'),
+            'personalizado': database.ref('temperaturas_ano')
+        };
         let periodoSelecionado = '24h'; // Padrão para as últimas 24 horas
         let temp1 = [], temp2 = [], temp3 = [];
 
@@ -524,10 +537,23 @@
                 },
         });
         
-        async function selecionarPeriodo(periodo) {
+       // Para períodos pré-definidos
+        function selecionarPeriodo(periodo) {
             periodoSelecionado = periodo;
+            mesSelecionado = null;
+            anoSelecionado = null;
+            document.getElementById('monthPicker').value = '';
             atualizarTemperaturas();
-            await atualizarAnalise();
+        }
+
+        // Para seleção de mês personalizado
+        function atualizarPorMes() {
+            const selected = document.getElementById('monthPicker').value;
+            if (selected) {
+                [anoSelecionado, mesSelecionado] = selected.split('-').map(Number);
+                periodoSelecionado = 'personalizado';
+                atualizarTemperaturas();
+            }
         }
         async function atualizarAnalise() {
     try {
@@ -589,36 +615,41 @@
         }
 
         function lerTemperaturas() {
-            let ref;
-            switch (periodoSelecionado) {
-                case '24h':
-                    ref = temperaturasRef;
-                    break;
-                case 'semana':
-                    ref = temperaturasSemanaRef;
-                    break;
-                case 'mes':
-                    ref = temperaturasMesRef;
-                    break;
-                default:
-                    ref = temperaturasRef;
-                    case 'ano': // Novo caso
-                    ref = temperaturasAnoRef;
-                    break;
-                
-            }
-
+            const ref = dbRefs[periodoSelecionado];
+            
             ref.once('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
-                    processarDadosTemperatura(data);
+                    let filteredData = data;
+                    
+                    // Aplica filtro apenas para período personalizado
+                    if (periodoSelecionado === 'personalizado') {
+                        filteredData = filtrarPorMes(data);
+                    }
+
+                    processarDadosTemperatura(filteredData);
+                    prepareData().then(runAnalysis); // Atualiza análise automaticamente
                 } else {
-                    alert("Erro: Nenhum dado encontrado no Firebase.");
+                    alert("Nenhum dado encontrado para o período selecionado.");
                 }
-            }, (error) => {
-                console.error("Erro ao ler os dados de temperaturas:", error);
-                alert("Erro ao conectar com o Firebase!");
+            }).catch(error => {
+                console.error("Erro:", error);
+                alert("Erro ao carregar dados!");
             });
+        }
+
+        function filtrarPorMes(data) {
+            const filtered = {};
+            const mesFormatado = mesSelecionado.toString().padStart(2, '0');
+            
+            for (const key in data) {
+                const [datePart] = key.split('_');
+                const [year, month] = datePart.split('-');
+                if (year === anoSelecionado.toString() && month === mesFormatado) {
+                    filtered[key] = data[key];
+                }
+            }
+            return filtered;
         }
 
         function atualizarTemperaturas() {
@@ -764,14 +795,19 @@
 let historicalData = [];
 
 async function prepareData() {
-    const ref = getRefByPeriod(); // Função que determina a referência com base no período
+    const ref = dbRefs[periodoSelecionado];
     const snapshot = await ref.once('value');
     const rawData = snapshot.val();
     
     historicalData = [];
     
-    for (const timestamp in rawData) {
-        const entry = rawData[timestamp];
+    // Aplica filtro se for seleção personalizada
+    const filteredData = periodoSelecionado === 'personalizado' 
+        ? filtrarPorMes(rawData)
+        : rawData;
+
+    for (const timestamp in filteredData) {
+        const entry = filteredData[timestamp];
         const [datePart, timePart] = timestamp.split('_');
         const [year, month, day] = datePart.split('-');
         const [hour, minute, second] = timePart.split('-');
