@@ -308,17 +308,17 @@
     </div>
 
 </div>
-<div class="col-md-12 mt-4">
-    <div class="card">
-        <div class="card-body">
-            <h5 class="card-title">Análise de Sensibilidade</h5>
-            <div id="regressionResults"></div>
-            <div id="timeLagResults" class="mt-3"></div>
-            <button class="btn btn-info mt-2" onclick="runAnalysis()">Atualizar Análise</button>
+        <div class="col-md-12 mt-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Análise de Sensibilidade</h5>
+                    <div id="regressionResults"></div>
+                    <div id="timeLagResults" class="mt-3"></div>
+                <button class="btn btn-info mt-2" onclick="runAnalysis()">Atualizar Análise</button>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
-            
+                    
 
         <div class="config-panel" id="configPanel">
                 <h4 class="text-center mb-4">Configuração de Limites</h4>
@@ -745,7 +745,8 @@
 let historicalData = [];
 
 async function prepareData() {
-    const snapshot = await temperaturasAnoRef.once('value');
+    const ref = getRefByPeriod(); // Função que determina a referência com base no período
+    const snapshot = await ref.once('value');
     const rawData = snapshot.val();
     
     historicalData = [];
@@ -767,13 +768,22 @@ async function prepareData() {
     historicalData.sort((a, b) => a.timestamp - b.timestamp);
 }
 
+function getRefByPeriod() {
+    switch(periodoSelecionado) {
+        case '24h': return temperaturasRef;
+        case 'semana': return temperaturasSemanaRef;
+        case 'mes': return temperaturasMesRef;
+        case 'ano': return temperaturasAnoRef;
+        default: return temperaturasRef;
+    }
+}
+
 async function runAnalysis() {
     try {
-        await prepareData();
+        await prepareData(); // Já usa o período selecionado
         
-        // Verificar dados
         if (historicalData.length < 20) {
-            showError('Mínimo de 20 registros para análise');
+            showError(`Mínimo de 20 registros para análise (${historicalData.length} encontrados)`);
             return;
         }
 
@@ -873,11 +883,24 @@ function pearsonCorrelation(x, y) {
 }
 
 function calculateAverageInterval(data) {
+    if(data.length < 2) return 0;
+    
+    // Filtra dados para considerar apenas o período selecionado
+    const filteredData = data.filter(entry => {
+        const age = Date.now() - entry.timestamp;
+        switch(periodoSelecionado) {
+            case '24h': return age <= 86400000;
+            case 'semana': return age <= 604800000;
+            case 'mes': return age <= 2592000000;
+            default: return true;
+        }
+    });
+
     let total = 0;
-    for (let i = 1; i < data.length; i++) {
-        total += data[i].timestamp - data[i-1].timestamp;
+    for (let i = 1; i < filteredData.length; i++) {
+        total += filteredData[i].timestamp - filteredData[i-1].timestamp;
     }
-    return (total / (data.length - 1)) / (1000 * 60); // Converter para minutos
+    return (total / (filteredData.length - 1)) / (1000 * 60);
 }
 function displayResults(resultados) {
     const html = `
@@ -894,9 +917,61 @@ function displayResults(resultados) {
     
     document.getElementById('regressionResults').innerHTML = html;
 }
+function displayResults(resultados) {
+    const periodos = {
+        '24h': 'Últimas 24 horas',
+        'semana': 'Última semana',
+        'mes': 'Último mês',
+        'ano': 'Histórico completo'
+    };
 
+    const html = `
+        <div class="alert alert-info">
+            <h5>Resultados da Análise (${periodos[periodoSelecionado]})</h5>
+            <ul>
+                <li>Período analisado: ${historicalData[0].timestamp.toLocaleDateString()} 
+                    a ${historicalData[historicalData.length-1].timestamp.toLocaleDateString()}</li>
+                <li>Total de amostras: ${historicalData.length}</li>
+                <li>Variação externa para 1°C na água: ${resultados.variacaoAgua.toFixed(2)}°C</li>
+                <li>Variação externa para 1°C na estufa: ${resultados.variacaoInterna.toFixed(2)}°C</li>
+                <li>Tempo de reflexão água: ${resultados.tempoReflexao.toFixed(2)} ${resultados.unidade}</li>
+            </ul>
+        </div>
+    `;
+    
+    document.getElementById('regressionResults').innerHTML = html;
+}
 
         
+async function runFullAnalysis() {
+    try {
+        // 1. Carregar dados e configurações
+        await prepareData();
+        const thresholds = await loadThresholds(); // Função existente modificada para retornar os limites
+        
+        // 2. Análise principal
+        const analysisResults = await runAnalysis(); // Função existente modificada
+        
+        // 3. Verificar dias problemáticos
+        const problematicDays = checkHistoricalConditions(historicalData, thresholds);
+        
+        // 4. Verificar previsão do tempo
+        const apiKey = 'sua_chave_api'; // Substituir pela chave real
+        const apiAvailable = await checkWeatherAPI(apiKey);
+        let forecastResults = '';
+        
+        if(apiAvailable) {
+            const forecast = await getWeatherForecast('São Paulo', apiKey);
+            forecastResults = analyzeForecast(forecast, thresholds);
+        }
+        
+        // 5. Exibir resultados combinados
+        displayFullResults(analysisResults, problematicDays, forecastResults);
+        
+    } catch (error) {
+        showError(error.message);
+    }
+}
 
         // Adicione no final do window.onload
         window.onload = function() {
@@ -908,6 +983,7 @@ function displayResults(resultados) {
             setTimeout(runAnalysis, 5000); // Executar após 5 segundos
         };
                 setInterval(atualizarTemperaturas, 3000);
+                
     </script>
 </body>
 </html>
