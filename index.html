@@ -182,6 +182,59 @@
         .help-icon:hover {
             transform: scale(1.1);
         }
+        .calendar-container {
+    position: relative;
+}
+
+
+
+.calendar-container {
+    position: relative;
+    border: 2px solid #007bff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.month-placeholder {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    pointer-events: none;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background: rgba(255,255,255,0.9);
+    padding: 0 5px;
+    z-index: 2;
+}
+
+#monthPicker {
+    width: 100%;
+    height: 40px;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    position: relative;
+    z-index: 3;
+}
+
+#monthPicker:focus + .month-placeholder,
+#monthPicker:not(:placeholder-shown) + .month-placeholder {
+    top: -10px;
+    font-size: 12px;
+    color: #007bff;
+    background: white;
+    padding: 0 5px;
+}
+
+#monthPicker::placeholder {
+    color: transparent;
+}
+
+
+
+
 
 
     </style>
@@ -249,13 +302,14 @@
             <!-- Botões -->
 <div class="text-center mt-4">
     
-    
-    <div class="btn-group" style="min-width: 200px;">
+    <div class="btn-group calendar-container" style="min-width: 200px; position: relative;">
         <input type="month" id="monthPicker" class="form-control" 
                onchange="atualizarPorMes()"
                min="2023-01" 
                max="2025-12"
-               title="Selecionar mês específico">
+               title="Selecionar mês específico"
+               placeholder=" ">
+        <label for="monthPicker" class="month-placeholder">Selecionar Mês</label>
     </div>
     <!-- Dropdown para seleção de período -->
     <div class="btn-group" style="min-width: 200px;">
@@ -1027,6 +1081,22 @@ async function runFullAnalysis() {
         showError(error.message);
     }
 }
+
+// Adicione no final do script
+document.getElementById('monthPicker').addEventListener('change', function() {
+    this.classList.toggle('has-value', !!this.value);
+    this.setAttribute('placeholder', this.value ? '' : ' ');
+});
+
+// Inicialização
+window.addEventListener('load', function() {
+    const picker = document.getElementById('monthPicker');
+    picker.setAttribute('placeholder', ' ');
+    picker.classList.add('has-value');
+});
+
+
+
 
         // Adicione no final do window.onload
         window.onload = function() {
