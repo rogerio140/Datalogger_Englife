@@ -682,7 +682,10 @@
                 case 'mes':
                     ref = temperaturasMesRef;
                     break;
-                case 'ano': // Novo caso
+                case 'ano':
+                    ref = temperaturasAnoRef;
+                    break;
+                case 'personalizado': // Novo caso para período personalizado
                     ref = temperaturasAnoRef;
                     break;
                 default:
@@ -690,31 +693,47 @@
             }
 
             ref.once('value', (snapshot) => {
-                snapshot.forEach((childSnapshot) => {
-                    const tempData = childSnapshot.val();
-                    const timestamp = childSnapshot.key;
-                    const [dataParte, horaParte] = timestamp.split('_');
+                const rawData = snapshot.val();
+                let filteredData = rawData;
+
+                // Aplicar filtro apenas para período personalizado
+                if (periodoSelecionado === 'personalizado') {
+                    filteredData = filtrarPorMes(rawData);
+                }
+
+                for (const key in filteredData) {
+                    const tempData = filteredData[key];
+                    const [dataParte, horaParte] = key.split('_');
                     const [ano, mes, dia] = dataParte.split('-');
                     const [hora, minuto, segundo] = horaParte.split('-');
                     const dataFormatada = `${dia}/${mes}/${ano}\t${hora}:${minuto}:${segundo}`;
 
                     const linha = `${dataFormatada}\t${tempData.agua}\t${tempData.estufa}\t${tempData.externa}`;
                     data.push(linha);
-                });
+                }
+
+                // Gerar nome do arquivo com período
+                let fileName = `Temperaturas_${periodoSelecionado}`;
+                if (periodoSelecionado === 'personalizado' && mesSelecionado && anoSelecionado) {
+                    fileName = `Temperaturas_${anoSelecionado}-${mesSelecionado.toString().padStart(2, '0')}`;
+                }
 
                 if (tipo === 'xlsx') {
                     const ws = XLSX.utils.aoa_to_sheet(data.map(item => item.split('\t')));
                     const wb = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(wb, ws, 'Temperaturas');
-                    XLSX.writeFile(wb, `Temperaturas_${periodoSelecionado}.xlsx`);
+                    XLSX.writeFile(wb, `${fileName}.xlsx`);
                 } else if (tipo === 'txt') {
                     const blob = new Blob([data.join('\n')], { type: 'text/plain' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `temperaturas_${periodoSelecionado}.txt`;
+                    a.download = `${fileName}.txt`;
                     a.click();
                 }
+            }).catch(error => {
+                console.error("Erro ao baixar dados:", error);
+                exibirNotificacao('Erro ao baixar dados!', 'danger');
             });
         }
 
@@ -837,7 +856,7 @@ async function runAnalysis() {
     try {
         await prepareData(); // Já usa o período selecionado
         
-        if (historicalData.length < 20) {
+        if (historicalData.length <10) {
             showError(`Mínimo de 20 registros para análise (${historicalData.length} encontrados)`);
             return;
         }
