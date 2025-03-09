@@ -184,6 +184,30 @@
         }
 
 
+
+
+
+/* Estilo do botão do ventilador */
+#ventiladorBtn {
+    transition: all 0.3s ease;
+    min-width: 150px;
+}
+
+#ventiladorBtn.active {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+}
+
+.bi-fan {
+    font-size: 1.5rem;
+    margin-left: 8px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
     </style>
 </head>
 <body>
@@ -234,7 +258,7 @@
                     </div>
                 </div>
             </div>
-    
+ 
             <!-- Gráfico -->
             <!-- Gráfico -->
             <div class="card">
@@ -314,6 +338,7 @@
         </ul>
     </div>
 
+
 </div>
         <div class="col-md-12 mt-4">
             <div class="card">
@@ -391,6 +416,20 @@
 
                     
             </div>
+           <!-- Adicione esta seção após os cards de temperatura -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Controle do Ventilador</h5>
+                <button id="ventiladorBtn" class="btn btn-lg btn-secondary">
+                    <span class="ventilador-status">Carregando...</span>
+                    <i class="bi bi-fan"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
         </div>
           
         <a href="https://wa.me/+5519996058199" class="help-icon" target="_blank">
@@ -1046,6 +1085,43 @@ async function runFullAnalysis() {
         showError(error.message);
     }
 }
+
+
+// Adicione estas variáveis no início com as outras referências
+const ventiladorRef = database.ref('ventilador');
+const ventiladorBtn = document.getElementById('ventiladorBtn');
+const ventiladorStatus = document.querySelector('.ventilador-status');
+
+// Função para controlar o ventilador
+function toggleVentilador() {
+    const novoEstado = ventiladorBtn.classList.contains('active') ? 0 : 1;
+    
+    ventiladorRef.set(novoEstado)
+        .then(() => {
+            exibirNotificacao(`Ventilador ${novoEstado ? 'ligado' : 'desligado'}`, 'success');
+        })
+        .catch((error) => {
+            exibirNotificacao(`Erro ao controlar ventilador: ${error.message}`, 'danger');
+        });
+}
+
+// Monitorar estado do ventilador
+ventiladorRef.on('value', (snapshot) => {
+    const estado = snapshot.val();
+    if (estado === 1) {
+        ventiladorBtn.classList.add('active');
+        ventiladorStatus.textContent = 'LIGADO';
+        ventiladorBtn.querySelector('.bi-fan').style.animationPlayState = 'running';
+    } else {
+        ventiladorBtn.classList.remove('active');
+        ventiladorStatus.textContent = 'DESLIGADO';
+        ventiladorBtn.querySelector('.bi-fan').style.animationPlayState = 'paused';
+    }
+});
+
+// Adicionar evento de clique
+ventiladorBtn.addEventListener('click', toggleVentilador);
+
 
         // Adicione no final do window.onload
         window.onload = function() {
