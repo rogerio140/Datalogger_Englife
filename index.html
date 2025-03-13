@@ -1136,8 +1136,11 @@ function displayResults(resultados) {
                 
                 <!-- Metadados -->
                 <div class="mt-4 text-muted">
-                    Período: ${tStart.toLocaleDateString()} - ${tEnd.toLocaleDateString()}
-                    (${diasTotal.toFixed(1)} dias)
+                
+                    Período analisado: ${historicalData[0].timestamp.toLocaleDateString()} 
+                    a ${historicalData[historicalData.length-1].timestamp.toLocaleDateString()}
+                
+                <li>Tempo de coleta: ${historicalData.length} horas</li>  
                
                 <li>Variação externa para 1°C na água: ${resultados.variacaoAgua.toFixed(2)}°C</li>
                 <li>Variação externa para 1°C na estufa: ${resultados.variacaoInterna.toFixed(2)}°C</li>
