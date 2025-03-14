@@ -187,27 +187,6 @@
 
 
 
-/* Estilo do botão do ventilador */
-#ventiladorBtn {
-    transition: all 0.3s ease;
-    min-width: 150px;
-}
-
-#ventiladorBtn.active {
-    background-color: #28a745 !important;
-    border-color: #28a745 !important;
-}
-
-.bi-fan {
-    font-size: 1.5rem;
-    margin-left: 8px;
-    animation: spin 2s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
 
 
 /* Progress Bar Improvements */
@@ -244,7 +223,26 @@
 }
 
 
+/* Estilos da Calibração */
+#calibracaoModal .alert {
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
 
+#calibracaoModal .input-group-text {
+    background: #e9ecef;
+    border-color: #dee2e6;
+}
+
+#calibracaoModal .progress {
+    height: 25px;
+    border-radius: 12px;
+}
+
+#calibracaoModal .progress-bar {
+    background-color: #ffc107;
+    transition: width 0.5s linear;
+}
 
     </style>
 </head>
@@ -455,25 +453,88 @@
                     
             </div>
            <!-- Adicione esta seção após os cards de temperatura -->
-<div class="row mt-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5 class="card-title">Controle do Atuador</h5>
-                <button id="ventiladorBtn" class="btn btn-lg btn-secondary">
-                    <span class="ventilador-status">Carregando...</span>
-                    <i class="bi bi-fan"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+
         </div>
           
         <a href="https://wa.me/+5519996058199" class="help-icon" target="_blank">
             <img src="ajuda.png" alt="Ajuda">
         </a>
 
+<!-- Botão de Calibração -->
+<div class="text-center mt-4">
+    <button class="btn btn-warning" onclick="iniciarCalibracao()" id="btnCalibracao">
+        Iniciar Calibração do Alimentador
+    </button>
+</div>
+
+        <!-- Modal de Calibração -->
+<div class="modal fade" id="calibracaoModal" tabindex="-1" aria-labelledby="calibracaoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title" id="calibracaoModalLabel">🔧 Calibração do Sistema</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="etapa0">
+                    <h5 class="text-center mb-4">Instruções Iniciais</h5>
+                    <ol>
+                        <li>Posicione o recipiente VAZIO na balança</li>
+                        <li>Certifique-se que o sistema está estável</li>
+                        <li>Clique em "Iniciar Calibração" abaixo</li>
+                    </ol>
+                    <div class="text-center">
+                        <button class="btn btn-warning" onclick="iniciarEtapa(1)">Iniciar Calibração</button>
+                    </div>
+                </div>
+
+                <div id="etapa1" style="display: none;">
+                    <div class="alert alert-info">
+                        <strong>Etapa 1/3:</strong> Motor ligado por <span id="tempo1Value"></span> segundos
+                    </div>
+                    <div class="progress mb-3">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                            id="progressEtapa1" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div id="etapa2" style="display: none;">
+                    <div class="alert alert-primary">
+                        <strong>Etapa 2/3:</strong> Aguarde e Insira o peso medido após a primeira descarga
+                    </div>
+                    <div class="input-group mb-3">
+                        <input type="number" id="peso1Input" class="form-control" 
+                               placeholder="Peso em gramas" step="1" min="0">
+                        <span class="input-group-text">gramas</span>
+                    </div>
+                    <button class="btn btn-primary w-100" onclick="avancarParaEtapa3()">Confirmar Peso</button>
+                </div>
+
+                <div id="etapa3" style="display: none;">
+                    <div class="alert alert-info">
+                        <strong>Etapa 3/3:</strong> Motor ligado por <span id="tempo2Value"></span> segundos
+                    </div>
+                    <div class="progress mb-3">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                            id="progressEtapa3" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div id="etapa4" style="display: none;">
+                    <div class="alert alert-success">
+                        <strong>Etapa Final:</strong> Aguarde e Insira o peso medido após a segunda descarga
+                    </div>
+                    <div class="input-group mb-3">
+                        <input type="number" id="peso2Input" class="form-control" 
+                               placeholder="Peso em gramas" step="1" min="0">
+                        <span class="input-group-text">gramas</span>
+                    </div>
+                <button class="btn btn-success w-100" onclick="finalizarCalibracao()">Finalizar Calibração</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
@@ -1188,44 +1249,143 @@ function displayResults(resultados) {
     document.getElementById('regressionResults').innerHTML = html;
 }
 
-        
+// No início do seu script, após carregar o Bootstrap
+let modalCalibracao = null;
 
-
-
-// Adicione estas variáveis no início com as outras referências
-const ventiladorRef = database.ref('ventilador');
-const ventiladorBtn = document.getElementById('ventiladorBtn');
-const ventiladorStatus = document.querySelector('.ventilador-status');
-
-// Função para controlar o ventilador
-function toggleVentilador() {
-    const novoEstado = ventiladorBtn.classList.contains('active') ? 0 : 1;
+document.addEventListener('DOMContentLoaded', () => {
+    // Inicializar o modal
+    const modalElement = document.getElementById('calibracaoModal');
+    modalCalibracao = new bootstrap.Modal(modalElement);
     
-    ventiladorRef.set(novoEstado)
-        .then(() => {
-            exibirNotificacao(`Ventilador ${novoEstado ? 'ligado' : 'desligado'}`, 'success');
-        })
-        .catch((error) => {
-            exibirNotificacao(`Erro ao controlar ventilador: ${error.message}`, 'danger');
-        });
+    // Restante do seu código de inicialização...
+});        
+
+let tempoRestante = 0;
+let intervaloProgresso;
+
+function iniciarCalibracao() {
+    // Resetar todos os campos
+    document.getElementById('etapa0').style.display = 'block';
+    document.getElementById('etapa1').style.display = 'none';
+    document.getElementById('etapa2').style.display = 'none';
+    document.getElementById('etapa3').style.display = 'none';
+    document.getElementById('etapa4').style.display = 'none';
+    document.getElementById('peso1Input').value = '';
+    document.getElementById('peso2Input').value = '';
+    modalCalibracao.show();
 }
 
-// Monitorar estado do ventilador
-ventiladorRef.on('value', (snapshot) => {
-    const estado = snapshot.val();
-    if (estado === 1) {
-        ventiladorBtn.classList.add('active');
-        ventiladorStatus.textContent = 'LIGADO';
-        ventiladorBtn.querySelector('.bi-fan').style.animationPlayState = 'running';
-    } else {
-        ventiladorBtn.classList.remove('active');
-        ventiladorStatus.textContent = 'DESLIGADO';
-        ventiladorBtn.querySelector('.bi-fan').style.animationPlayState = 'paused';
+async function iniciarEtapa(etapa) {
+    const db = firebase.database();
+    
+    if(etapa === 1) {
+        // Obter tempos do Firebase
+        const snapshot = await db.ref('calibracao').once('value');
+        const { tempo1, tempo2 } = snapshot.val();
+        
+        // Atualizar display
+        document.getElementById('tempo1Value').textContent = tempo1;
+        document.getElementById('tempo2Value').textContent = tempo2;
+        
+        // Iniciar primeira etapa
+        document.getElementById('etapa0').style.display = 'none';
+        document.getElementById('etapa1').style.display = 'block';
+        
+        // Ativar no Firebase
+        await db.ref('calibracao').update({
+            ativa: true,
+            etapa: 1
+        });
+        
+        iniciarContagemRegressiva(tempo1, 'progressEtapa1', () => {
+            document.getElementById('etapa1').style.display = 'none';
+            document.getElementById('etapa2').style.display = 'block';
+        });
     }
-});
+}
 
-// Adicionar evento de clique
-ventiladorBtn.addEventListener('click', toggleVentilador);
+function avancarParaEtapa3() {
+    const peso1 = document.getElementById('peso1Input').value;
+    if(!peso1 || peso1 < 1) {
+        alert("Por favor insira um peso válido!");
+        return;
+    }
+
+    firebase.database().ref('calibracao').update({
+        peso1: parseInt(peso1),
+        etapa: 2
+    }).then(() => {
+        document.getElementById('etapa2').style.display = 'none';
+        document.getElementById('etapa3').style.display = 'block';
+        
+        // Obter tempo2 do Firebase
+        firebase.database().ref('calibracao/tempo2').once('value').then(snapshot => {
+            const tempo2 = snapshot.val();
+            iniciarContagemRegressiva(tempo2, 'progressEtapa3', () => {
+                document.getElementById('etapa3').style.display = 'none';
+                document.getElementById('etapa4').style.display = 'block';
+            });
+        });
+    });
+}
+
+function finalizarCalibracao() {
+    const peso2 = document.getElementById('peso2Input').value;
+    if(!peso2 || peso2 < 1) {
+        alert("Por favor insira um peso válido!");
+        return;
+    }
+
+    // Desabilitar botão para evitar múltiplos cliques
+    const btn = document.querySelector('#etapa4 button');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div> Processando...';
+
+    // Primeiro atualiza o peso2
+    firebase.database().ref('calibracao').update({
+        peso2: parseInt(peso2)
+    }).then(() => {
+        // Delay de 5 segundos antes de desativar
+        setTimeout(() => {
+            firebase.database().ref('calibracao').update({
+                ativa: false,
+                etapa: 0
+            }).then(() => {
+                modalCalibracao.hide();
+                exibirNotificacao('Calibração concluída com sucesso!', 'success');
+                btn.disabled = false;
+                btn.textContent = 'Finalizar Calibração';
+            }).catch((error) => {
+                console.error("Erro ao finalizar calibração:", error);
+                exibirNotificacao('Erro ao finalizar calibração!', 'danger');
+                btn.disabled = false;
+                btn.textContent = 'Finalizar Calibração';
+            });
+        }, 5000); // 5000 ms = 5 segundos
+
+    }).catch((error) => {
+        console.error("Erro ao salvar peso2:", error);
+        exibirNotificacao('Erro ao salvar peso!', 'danger');
+        btn.disabled = false;
+        btn.textContent = 'Finalizar Calibração';
+    });
+}
+
+function iniciarContagemRegressiva(segundos, elementId, callback) {
+    let progresso = 0;
+    const elemento = document.getElementById(elementId);
+    
+    intervaloProgresso = setInterval(() => {
+        progresso += (100 / segundos);
+        elemento.style.width = `${progresso}%`;
+        
+        if(progresso >= 100) {
+            clearInterval(intervaloProgresso);
+            callback();
+        }
+    }, 1000);
+}
+
 
 
         // Adicione no final do window.onload
