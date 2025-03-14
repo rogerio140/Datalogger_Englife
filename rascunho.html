@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor de Temperatura</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" href="englife.icon" type="image/icon">
+    <title>Ícone de Ajuda</title>
+    <style>
+        /* Estilos da Tela de Abertura */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(160deg, #ffffff 30%, #7fc5fa 50%);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s ease-in-out;
+        }
+        .card, #chart-container {
+        background: rgba(255, 255, 255, 0.4) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .gradient-bg {
+        background: linear-gradient(
+            135deg,
+            rgba(176, 224, 255, 0.3) 0%,
+            rgba(240, 248, 255, 0.2) 100%
+        );
+        padding: 20px;
+        border-radius: 15px;
+        margin-bottom: 25px;
+    }
+        #splash-screen img {
+            width: 350px;
+            animation: 
+                swim 2s ease-in-out infinite,
+                float 3s ease-in-out infinite;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.2));
+        }
+
+        @keyframes swim {
+            0% { transform: translateX(0) rotate(-5deg); }
+            25% { transform: translateX(-15px) rotate(5deg); }
+            50% { transform: translateX(0) rotate(-5deg); }
+            75% { transform: translateX(15px) rotate(5deg); }
+            100% { transform: translateX(0) rotate(-5deg); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        /* Estilos do conteúdo principal */
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, 
+                #ffffff 0%, 
+                #f0f8ff 100%
+            );
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .hidden-content {
+            opacity: 0;
+            transition: opacity 0.5s ease-in;
+        }
+
+        .card {
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(5px);
+        }
+
+        /* Restante dos estilos... */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .content {
+            position: relative;
+        }
+        .card {
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .card-title {
+            font-weight: bold;
+            margin-bottom: 0;
+        }
+        .card-icon {
+            font-size: 40px;
+            margin-right: 15px;
+        }
+        .card-value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        #chart-container {
+            margin-top: 20px;
+            height: 400px;
+        }
+        .row {
+            margin-top: 30px;
+        }
+        .btn-primary {
+            font-size: 16px;
+        }
+        #notification {
+            display: none;
+            margin-top: 20px;
+        }
+        /* Ajuste no body para o gradiente principal */
+    body {
+        background: linear-gradient(
+            to bottom right,
+            #e6f4ff,
+            #227ebb
+        );
+        background-attachment: fixed;
+    }
+
+    /* Ajuste nas cores do texto para melhor contraste */
+    .card-title, .card-value {
+        color: #2c3e50 !important;
+    }
+    /* Novos estilos para alertas e configuração */
+
+    .sensor-alert {
+    color: red !important; /* Texto vermelho quando há alerta */
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Espaço entre o ícone e o texto */
+}
+
+.alert-icon {
+    font-size: 22px;
+    color: yellow;
+    text-shadow: 0px 0px 3px black;
+    animation: alert-pulse 1.5s infinite;
+}
+
+@keyframes alert-pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Estilização do botão de ajuda */
+.help-icon {
+            position: fixed;
+            bottom: 10px;
+            right: 20px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .help-icon img {
+            width: 100%;
+            height: 100%;
+        }
+
+        .help-icon:hover {
+            transform: scale(1.1);
+        }
+
+
+
+
+
+/* Estilo do botão do ventilador */
+#ventiladorBtn {
+    transition: all 0.3s ease;
+    min-width: 150px;
+}
+
+#ventiladorBtn.active {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+}
+
+.bi-fan {
+    font-size: 1.5rem;
+    margin-left: 8px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
+/* Progress Bar Improvements */
+.progress {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.progress-bar {
+    position: relative;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    transition: width 0.5s ease;
+    min-width: 40px; /* Garante visibilidade mesmo em % pequenas */
+}
+
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    right: -2px;
+    height: 100%;
+    width: 2px;
+    background: rgba(255,255,255,0.3);
+}
+
+/* Badge Styling */
+.badge {
+    font-size: 0.9em;
+    padding: 0.5em 0.8em;
+    border-radius: 20px;
+    width: 100%;
+    margin: 2px 0;
+}
+
+
+
+
+    </style>
+</head>
+<body>
+    <!-- Tela de Abertura -->
+    <div id="splash-screen">
+        <img src="englife.png" alt="EngLife Carregando...">
+    </div>
+
+    <!-- Conteúdo Principal (oculto inicialmente) -->
+    <div class="container hidden-content">
+        <!-- Todo o conteúdo original aqui -->
+        <div class="container content">
+            <h1 class="text-center my-4">Monitor de Temperatura</h1>
+    
+            <!-- Cards de Temperatura -->
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body d-flex align-items-center">
+                            <span class="card-icon text-primary">🌡️</span>
+                            <div>
+                                <h5 class="card-title">Temperatura Água</h5>
+                                <p class="card-value text-primary" id="temp1">Carregando...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body d-flex align-items-center">
+                            <span class="card-icon text-success">🌡️</span>
+                            <div>
+                                <h5 class="card-title">Temperatura Ar Estufa</h5>
+                                <p class="card-value text-success" id="temp2">Carregando...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body d-flex align-items-center">
+                            <span class="card-icon text-warning">🌡️</span>
+                            <div>
+                                <h5 class="card-title">Temperatura Ar Externo</h5>
+                                <p class="card-value text-warning" id="temp3">Carregando...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+ 
+            <!-- Gráfico -->
+            <!-- Gráfico -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Gráfico de Temperaturas</h5>
+                    <div id="chart-container">
+                        <canvas id="temperatureChart"></canvas>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Botões -->
+<div class="text-center mt-4">
+    
+    <label for="monthPicker" title="Selecionar mês específico">Escolha um mês:</label>
+    <div class="btn-group" style="min-width: 200px;">
+        <input type="month" id="monthPicker" class="form-control" 
+               onchange="atualizarPorMes()"
+               min="2023-01" 
+               max="2025-12"
+               title="Selecionar mês específico">
+    </div>
+    <!-- Dropdown para seleção de período -->
+    <div class="btn-group" style="min-width: 200px;">
+        <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            Selecionar Período
+        </button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('24h')">Últimas 24 horas</a></li>
+            <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('semana')">Última Semana</a></li>
+            <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('mes')">Último Mês</a></li>
+            <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('ano')">Registro completo</a></li>
+        </ul>
+    </div>
+
+    <!-- Dropdown para opções de download -->
+    <div class="btn-group" style="min-width: 200px;">
+        <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            Baixar Dados
+        </button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" onclick="baixarDados('xlsx')">Baixar em XLSX</a></li>
+            <li><a class="dropdown-item" href="#" onclick="baixarDados('txt')">Baixar em TXT</a></li>
+        </ul>
+    </div>
+    <!-- Adicione este código após os botões de download -->
+    <div class="btn-group" style="min-width: 200px;">
+    
+        <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" >
+            Selecionar Sensores  
+        </button>
+        <ul class="dropdown-menu">
+            <li class="dropdown-item">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="toggleAgua" checked>
+                    <label class="form-check-label" for="toggleAgua">
+                        Água
+                    </label>
+                </div>
+            </li>
+            <li class="dropdown-item">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="toggleEstufa" checked>
+                    <label class="form-check-label" for="toggleEstufa">
+                        Ar Estufa
+                    </label>
+                </div>
+            </li>
+            <li class="dropdown-item">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="toggleExterno" checked>
+                    <label class="form-check-label" for="toggleExterno">
+                        Ar Externo
+                    </label>
+                </div>
+            </li>
+        </ul>
+    </div>
+    <div class="btn-group">
+
+</div>
+        <div class="col-md-12 mt-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Análise de Sensibilidade</h5>
+                    <div id="regressionResults"></div>
+                    <div id="timeLagResults" class="mt-3"></div>
+                
+                </div>
+            </div>
+        </div>
+                    
+
+        <div class="config-panel" id="configPanel">
+                <h4 class="text-center mb-4">Parâmetros de conforto Térmico</h4>
+                <div class="row">
+                    <!-- Configuração para Água -->
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Água</h5>
+                                <div class="mb-3">
+                                    <label>Máxima (°C)</label>
+                                    <input type="number" step="0.1" id="maxAgua" class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label>Mínima (°C)</label>
+                                    <input type="number" step="0.1" id="minAgua" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Configuração para Ar Estufa -->
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Ar Estufa</h5>
+                                <div class="mb-3">
+                                    <label>Máxima (°C)</label>
+                                    <input type="number" step="0.1" id="maxEstufa" class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label>Mínima (°C)</label>
+                                    <input type="number" step="0.1" id="minEstufa" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Configuração para Ar Externo -->
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Ar Externo</h5>
+                                <div class="mb-3">
+                                    <label>Máxima (°C)</label>
+                                    <input type="number" step="0.1" id="maxExterno" class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label>Mínima (°C)</label>
+                                    <input type="number" step="0.1" id="minExterno" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-4">
+                    <button class="btn btn-primary" onclick="salvarConfig()">Salvar Configurações</button>
+                </div>
+                    <!-- Repita para os outros sensores -->
+                
+
+                    <!-- Notificação e Alertas -->
+                    <div id="notification" class="alert alert-success" role="alert"></div>
+                    <div id="alertContainer" class="alert-container"></div>
+
+                    
+            </div>
+           <!-- Adicione esta seção após os cards de temperatura -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Controle do Atuador</h5>
+                <button id="ventiladorBtn" class="btn btn-lg btn-secondary">
+                    <span class="ventilador-status">Carregando...</span>
+                    <i class="bi bi-fan"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+        </div>
+          
+        <a href="https://wa.me/+5519996058199" class="help-icon" target="_blank">
+            <img src="ajuda.png" alt="Ajuda">
+        </a>
+
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Remova a linha anterior do ml-regression-multivariate-linear -->
+    <script src="https://cdn.jsdelivr.net/npm/regression@2.0.1/dist/regression.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.2.0/math.min.js"></script>
+    <!-- Scripts -->
+    <script>
+        // Controle da tela de abertura
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                const splashScreen = document.getElementById('splash-screen');
+                const mainContent = document.querySelector('.hidden-content');
+                
+                splashScreen.style.opacity = '0';
+                mainContent.style.opacity = '1';
+                
+                setTimeout(() => {
+                    splashScreen.style.display = 'none';
+                }, 1000);
+                
+            }, 3000); // 3 segundos de exibição
+        });
+
+        // Restante do código Firebase...
+        const firebaseConfig = {
+            apiKey: "AIzaSyAMAf30UG0YOqaxF-KgD5gfAhWhddN-5Qg",
+            authDomain: "datalogeer.firebaseapp.com",
+            databaseURL: "https://datalogeer-default-rtdb.firebaseio.com/",
+            projectId: "datalogeer",
+            storageBucket: "datalogeer.appspot.com",
+        };
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database(app);
+        const sensoresRef = database.ref('sensores');
+        const temperaturasRef = database.ref('temperaturas');
+        const temperaturasSemanaRef = database.ref('temperaturas_semana');
+        const temperaturasMesRef = database.ref('temperaturas_mes');
+        const temperaturasAnoRef = database.ref('temperaturas_ano'); // Adicione esta linha com as outras refs
+          // Adicione após a inicialização do Firebase
+        const thresholdsRef = database.ref('alert_thresholds');
+        const temp1Element = document.getElementById('temp1');
+        const temp2Element = document.getElementById('temp2');
+        const temp3Element = document.getElementById('temp3');
+        
+        const dbRefs = {
+            '24h': database.ref('temperaturas'),
+            'semana': database.ref('temperaturas_semana'),
+            'mes': database.ref('temperaturas_mes'),
+            'ano': database.ref('temperaturas_ano'),
+            'personalizado': database.ref('temperaturas_ano')
+        };
+        let periodoSelecionado = '24h'; // Padrão para as últimas 24 horas
+        let temp1 = [], temp2 = [], temp3 = [];
+
+        const ctx = document.getElementById('temperatureChart').getContext('2d');
+        // Controle de visibilidade das séries
+        document.getElementById('toggleAgua').addEventListener('change', function() {
+            chart.data.datasets[0].hidden = !this.checked;
+            chart.update();
+        });
+
+        document.getElementById('toggleEstufa').addEventListener('change', function() {
+            chart.data.datasets[1].hidden = !this.checked;
+            chart.update();
+        });
+
+        document.getElementById('toggleExterno').addEventListener('change', function() {
+            chart.data.datasets[2].hidden = !this.checked;
+            chart.update();
+        });
+        document.querySelectorAll('.toggle-sensor').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const datasetIndex = parseInt(this.dataset.index);
+                chart.data.datasets[datasetIndex].hidden = !this.checked;
+                chart.update();
+            });
+        });
+        // Modifique a configuração do gráfico para incluir a propriedade hidden
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Temperatura Água',
+                        data: temp3,
+                        borderColor: 'blue',
+                        backgroundColor: 'rgba(0, 0, 255, 0.1)',
+                        fill: false,
+                        hidden: false
+                    },
+                    {
+                        label: 'Temperatura Ar Estufa',
+                        data: temp2,
+                        borderColor: 'green',
+                        backgroundColor: 'rgba(0, 255, 0, 0.1)',
+                        fill: false,
+                        hidden: false
+                    },
+                    {
+                        label: 'Temperatura Ar Externo',
+                        data: temp1,
+                        borderColor: 'orange',
+                        backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                        fill: false,
+                        hidden: false
+                    },
+                ],
+            },
+            
+            options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: { display: true, text: 'Temperatura (°C)' },
+                        },
+                        x: { title: { display: true, text: 'Tempo' } },
+                    },
+                    
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                filter: (legendItem, chartData) => {
+                                    // Mostra apenas legendas para datasets visíveis
+                                    return !chartData.datasets[legendItem.datasetIndex].hidden;
+                                }
+                            }
+                        }
+                    }
+                },
+        });
+        
+       // Para períodos pré-definidos
+        function selecionarPeriodo(periodo) {
+            periodoSelecionado = periodo;
+            mesSelecionado = null;
+            anoSelecionado = null;
+            document.getElementById('monthPicker').value = '';
+            atualizarTemperaturas();
+        }
+
+        // Para seleção de mês personalizado
+        function atualizarPorMes() {
+            const selected = document.getElementById('monthPicker').value;
+            if (selected) {
+                [anoSelecionado, mesSelecionado] = selected.split('-').map(Number);
+                periodoSelecionado = 'personalizado';
+                atualizarTemperaturas();
+            }
+        }
+        async function atualizarAnalise() {
+    try {
+        // Mostrar loading
+        document.getElementById('regressionResults').innerHTML = `
+            <div class="text-center my-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                <p>Atualizando análise para período: ${periodoSelecionado}</p>
+            </div>
+        `;
+
+        await prepareData();
+        await runAnalysis();
+        
+    } catch (error) {
+        showError(error.message);
+    }
+}
+        function processarDadosTemperatura(data) {
+            chart.data.labels = [];
+            chart.data.datasets.forEach(dataset => dataset.data = []);
+
+            for (const timestamp in data) {
+                if (data.hasOwnProperty(timestamp)) {
+                    const temperaturaData = data[timestamp];
+                    const [dataParte, horaParte] = timestamp.split('_');
+                    const [ano, mes, dia] = dataParte.split('-');
+                    const [hora, minuto, segundo] = horaParte.split('-');
+                    const dataFormatada = `${dia}/${mes}/${ano} ${hora}:${minuto}:${segundo}`;
+
+                    chart.data.labels.push(dataFormatada);
+                    chart.data.datasets[0].data.push(temperaturaData.agua || null);
+                    chart.data.datasets[1].data.push(temperaturaData.estufa || null);
+                    chart.data.datasets[2].data.push(temperaturaData.externa || null);
+                }
+            }
+
+            chart.update();
+        }
+
+        function lerSensores() {
+            sensoresRef.once('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    temp1Element.textContent = `${(data.temperatura_3 || 0).toFixed(2)} °C`;
+                    temp2Element.textContent = `${(data.temperatura_2 || 0).toFixed(2)} °C`;
+                    temp3Element.textContent = `${(data.temperatura_1 || 0).toFixed(2)} °C`;
+                    verificarAlertas(data);
+                } else {
+                    console.log("Nenhum dado encontrado no nó sensores.");
+                    exibirNotificacao('Erro ao conectar com o Firebase.', 'danger');
+                }
+            }, (error) => {
+                console.error("Erro ao ler os dados dos sensores:", error);
+                alert("Erro ao conectar com o Firebase!");
+            });
+        }
+
+        function lerTemperaturas() {
+            const ref = dbRefs[periodoSelecionado];
+            
+            ref.once('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    let filteredData = data;
+                    
+                    // Aplica filtro apenas para período personalizado
+                    if (periodoSelecionado === 'personalizado') {
+                        filteredData = filtrarPorMes(data);
+                    }
+
+                    processarDadosTemperatura(filteredData);
+                    prepareData().then(runAnalysis); // Atualiza análise automaticamente
+                } else {
+                    alert("Nenhum dado encontrado para o período selecionado.");
+                }
+            }).catch(error => {
+                console.error("Erro:", error);
+                alert("Erro ao carregar dados!");
+            });
+        }
+
+        function filtrarPorMes(data) {
+            const filtered = {};
+            const mesFormatado = mesSelecionado.toString().padStart(2, '0');
+            
+            for (const key in data) {
+                const [datePart] = key.split('_');
+                const [year, month] = datePart.split('-');
+                if (year === anoSelecionado.toString() && month === mesFormatado) {
+                    filtered[key] = data[key];
+                }
+            }
+            return filtered;
+        }
+
+        function atualizarTemperaturas() {
+            lerSensores();
+            lerTemperaturas();
+        }
+
+        function exibirNotificacao(mensagem, tipo) {
+            const notification = document.getElementById('notification');
+            notification.textContent = mensagem;
+            notification.classList.remove('alert-success', 'alert-danger');
+            notification.classList.add(tipo === 'success' ? 'alert-success' : 'alert-danger');
+            notification.style.display = 'block';
+
+            setTimeout(() => notification.style.display = 'none', 5000);
+        }
+
+        function baixarDados(tipo) {
+            const header = 'Data\tHora\tTemperatura Água\tTemperatura Estufa\tTemperatura Externa';
+            const data = [header];
+
+            let ref;
+            switch (periodoSelecionado) {
+                case '24h':
+                    ref = temperaturasRef;
+                    break;
+                case 'semana':
+                    ref = temperaturasSemanaRef;
+                    break;
+                case 'mes':
+                    ref = temperaturasMesRef;
+                    break;
+                case 'ano':
+                    ref = temperaturasAnoRef;
+                    break;
+                case 'personalizado': // Novo caso para período personalizado
+                    ref = temperaturasAnoRef;
+                    break;
+                default:
+                    ref = temperaturasRef;
+            }
+
+            ref.once('value', (snapshot) => {
+                const rawData = snapshot.val();
+                let filteredData = rawData;
+
+                // Aplicar filtro apenas para período personalizado
+                if (periodoSelecionado === 'personalizado') {
+                    filteredData = filtrarPorMes(rawData);
+                }
+
+                for (const key in filteredData) {
+                    const tempData = filteredData[key];
+                    const [dataParte, horaParte] = key.split('_');
+                    const [ano, mes, dia] = dataParte.split('-');
+                    const [hora, minuto, segundo] = horaParte.split('-');
+                    const dataFormatada = `${dia}/${mes}/${ano}\t${hora}:${minuto}:${segundo}`;
+
+                    const linha = `${dataFormatada}\t${tempData.agua}\t${tempData.estufa}\t${tempData.externa}`;
+                    data.push(linha);
+                }
+
+                // Gerar nome do arquivo com período
+                let fileName = `Temperaturas_${periodoSelecionado}`;
+                if (periodoSelecionado === 'personalizado' && mesSelecionado && anoSelecionado) {
+                    fileName = `Temperaturas_${anoSelecionado}-${mesSelecionado.toString().padStart(2, '0')}`;
+                }
+
+                if (tipo === 'xlsx') {
+                    const ws = XLSX.utils.aoa_to_sheet(data.map(item => item.split('\t')));
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'Temperaturas');
+                    XLSX.writeFile(wb, `${fileName}.xlsx`);
+                } else if (tipo === 'txt') {
+                    const blob = new Blob([data.join('\n')], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${fileName}.txt`;
+                    a.click();
+                }
+            }).catch(error => {
+                console.error("Erro ao baixar dados:", error);
+                exibirNotificacao('Erro ao baixar dados!', 'danger');
+            });
+        }
+
+
+      
+
+        // Funções de Configuração
+        function toggleConfig() {
+                    const panel = document.getElementById('configPanel');
+                    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+                }
+
+                function carregarConfig() {
+                    thresholdsRef.on('value', (snapshot) => {
+                        if (snapshot.exists()) {
+                            alertThresholds = snapshot.val();
+                            document.getElementById('maxAgua').value = alertThresholds.agua.max;
+                            document.getElementById('minAgua').value = alertThresholds.agua.min;
+                            document.getElementById('maxEstufa').value = alertThresholds.estufa.max;
+                            document.getElementById('minEstufa').value = alertThresholds.estufa.min;
+                            document.getElementById('maxExterno').value = alertThresholds.externa.max;
+                            document.getElementById('minExterno').value = alertThresholds.externa.min;
+                        }
+                    });
+                }
+
+                function salvarConfig() {
+                    const newConfig = {
+                        agua: {
+                            max: parseFloat(document.getElementById('maxAgua').value),
+                            min: parseFloat(document.getElementById('minAgua').value)
+                        },
+                        estufa: {
+                            max: parseFloat(document.getElementById('maxEstufa').value),
+                            min: parseFloat(document.getElementById('minEstufa').value)
+                        },
+                        externa: {
+                            max: parseFloat(document.getElementById('maxExterno').value),
+                            min: parseFloat(document.getElementById('minExterno').value)
+                        }
+                    };
+
+                    thresholdsRef.set(newConfig)
+                        .then(() => exibirNotificacao('Configurações salvas com sucesso!', 'success'))
+                        .catch((error) => exibirNotificacao('Erro ao salvar: ' + error.message, 'danger'));
+                }
+
+                function verificarAlertas(data) {
+    const cards = {
+        agua: document.getElementById('temp1'),
+        estufa: document.getElementById('temp2'),
+        externa: document.getElementById('temp3')
+    };
+
+    Object.keys(alertThresholds).forEach((sensor) => {
+        const valor = data[`temperatura_${sensor === 'agua' ? 3 : sensor === 'estufa' ? 2 : 1}`];
+        const card = cards[sensor];
+
+        // Adiciona a classe de alerta ao card
+        card.classList.toggle('sensor-alert', valor > alertThresholds[sensor].max || valor < alertThresholds[sensor].min);
+
+        let alertIcon = card.querySelector('.alert-icon');
+
+        if (card.classList.contains('sensor-alert')) {
+            // Se o ícone ainda não foi adicionado, cria ele
+            if (!alertIcon) {
+                alertIcon = document.createElement('span');
+                alertIcon.classList.add('alert-icon');
+                alertIcon.innerHTML = '⚠️'; // Ícone de alerta amarelo
+                card.prepend(alertIcon); // Adiciona antes do texto do card
+            }
+        } else {
+            // Remove o ícone se ele existir
+            if (alertIcon) alertIcon.remove();
+        }
+    });
+}
+let historicalData = [];
+
+async function prepareData() {
+    const ref = dbRefs[periodoSelecionado];
+    const snapshot = await ref.once('value');
+    const rawData = snapshot.val();
+    
+    historicalData = [];
+    
+    // Aplica filtro se for seleção personalizada
+    const filteredData = periodoSelecionado === 'personalizado' 
+        ? filtrarPorMes(rawData)
+        : rawData;
+
+    for (const timestamp in filteredData) {
+        const entry = filteredData[timestamp];
+        const [datePart, timePart] = timestamp.split('_');
+        const [year, month, day] = datePart.split('-');
+        const [hour, minute, second] = timePart.split('-');
+        
+        historicalData.push({
+            timestamp: new Date(year, month-1, day, hour, minute, second),
+            agua: parseFloat(entry.agua),
+            estufa: parseFloat(entry.estufa),
+            externa: parseFloat(entry.externa)
+        });
+    }
+    
+    historicalData.sort((a, b) => a.timestamp - b.timestamp);
+}
+
+function getRefByPeriod() {
+    switch(periodoSelecionado) {
+        case '24h': return temperaturasRef;
+        case 'semana': return temperaturasSemanaRef;
+        case 'mes': return temperaturasMesRef;
+        case 'ano': return temperaturasAnoRef;
+        default: return temperaturasRef;
+    }
+}
+
+async function runAnalysis() {
+    try {
+        await prepareData();
+
+        if (historicalData.length < 10) {
+            showError(`Mínimo de 10 registros para análise (${historicalData.length} encontrados)`);
+            return;
+        }
+
+        // 1. Determinar período de análise
+        let tStart, tEnd;
+        if (periodoSelecionado === 'personalizado' && anoSelecionado && mesSelecionado) {
+            tStart = new Date(anoSelecionado, mesSelecionado - 1, 1);
+            tEnd = new Date(anoSelecionado, mesSelecionado, 0, 23, 59, 59, 999);
+        } else {
+            tEnd = new Date();
+            switch (periodoSelecionado) {
+                case '24h': tStart = new Date(tEnd - 86400000); break;
+                case 'semana': tStart = new Date(tEnd - 604800000); break;
+                case 'mes': tStart = new Date(tEnd - 2592000000); break;
+                case 'ano': tStart = new Date(tEnd - 31536000000); break;
+                default: tStart = new Date(tEnd - 86400000);
+            }
+        }
+        // 1. Calcular variações
+        const variations = calculateVariations(historicalData);
+
+        // 2. Realizar regressões
+        const coefAgua = olsRegression(variations.Var_Externa, variations.Var_Agua);
+        const coefInterna = olsRegression(variations.Var_Externa, variations.Var_Interna);
+
+        // 3. Calcular correlação cruzada
+        const lag = calculateCrossCorrelation(historicalData.map(d => d.externa), 
+                                            historicalData.map(d => d.agua));
+
+        // 4. Calcular intervalos
+        const intervaloMedio = calculateAverageInterval(historicalData);
+        
+        // 5. Calcular resultados finais
+        const variacaoMax = 1.5; // Substituir por valor do Firebase
+        // 2. Filtrar dados do período
+        const filteredData = historicalData.filter(entry => 
+            entry.timestamp >= tStart && entry.timestamp <= tEnd
+        );
+
+        // 3. Cálculo do tempo fora dos limites
+        const limites = alertThresholds.agua;
+        let stats = {
+            above: 0,
+            below: 0,
+            total: tEnd - tStart
+        };
+
+        let prevTime = tStart;
+        let prevTemp = filteredData[0]?.agua;
+
+        filteredData.forEach(entry => {
+            const delta = entry.timestamp - prevTime;
+            
+            if (prevTemp > limites.max) stats.above += delta;
+            else if (prevTemp < limites.min) stats.below += delta;
+            
+            prevTime = entry.timestamp;
+            prevTemp = entry.agua;
+        });
+
+        // Tempo após último registro
+        const finalDelta = tEnd - prevTime;
+        if (prevTemp > limites.max) stats.above += finalDelta;
+        else if (prevTemp < limites.min) stats.below += finalDelta;
+
+        // 4. Calcular porcentagens
+        const percentuais = {
+            above: (stats.above / stats.total) * 100,
+            below: (stats.below / stats.total) * 100,
+            within: 100 - ((stats.above + stats.below) / stats.total) * 100
+        };
+
+        // 5. Montar objeto de resultados
+        const resultados = {
+            period: { tStart, tEnd },
+            percentuais,
+            variacaoAgua: 1 / coefAgua,
+            variacaoInterna: 1 / coefInterna,
+            tempoReflexao: coefAgua * intervaloMedio*60,
+            intervaloMedio,
+            unidade: 'minutos'
+            // ... outros resultados existentes
+        };
+
+        displayResults(resultados);
+
+    } catch (error) {
+        showError(error.message);
+    }
+}
+function calculateVariations(data) {
+    const variations = {
+        Var_Agua: [],
+        Var_Interna: [],
+        Var_Externa: []
+    };
+
+    for (let i = 1; i < data.length; i++) {
+        variations.Var_Agua.push(data[i].agua - data[i-1].agua);
+        variations.Var_Interna.push(data[i].estufa - data[i-1].estufa);
+        variations.Var_Externa.push(data[i].externa - data[i-1].externa);
+    }
+
+    return variations;
+}
+
+function olsRegression(X, Y) {
+    const sumX = X.reduce((a, b) => a + b, 0);
+    const sumY = Y.reduce((a, b) => a + b, 0);
+    const sumXY = X.reduce((a, _, i) => a + (X[i] * Y[i]), 0);
+    const sumX2 = X.reduce((a, b) => a + (b * b), 0);
+
+    const n = X.length;
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    
+    return slope;
+}
+
+function calculateCrossCorrelation(externa, agua, maxLag = 24) {
+    let bestLag = 0;
+    let maxCorr = -Infinity;
+
+    for (let lag = 0; lag <= maxLag; lag++) {
+        const shiftedExterna = externa.slice(lag);
+        const shiftedAgua = agua.slice(0, agua.length - lag);
+        
+        const corr = pearsonCorrelation(shiftedExterna, shiftedAgua);
+        
+        if (corr > maxCorr) {
+            maxCorr = corr;
+            bestLag = lag;
+        }
+    }
+
+    return bestLag;
+}
+
+function pearsonCorrelation(x, y) {
+    const n = x.length;
+    const meanX = x.reduce((a, b) => a + b, 0) / n;
+    const meanY = y.reduce((a, b) => a + b, 0) / n;
+    
+    let numerator = 0;
+    let denominatorX = 0;
+    let denominatorY = 0;
+
+    for (let i = 0; i < n; i++) {
+        numerator += (x[i] - meanX) * (y[i] - meanY);
+        denominatorX += Math.pow(x[i] - meanX, 2);
+        denominatorY += Math.pow(y[i] - meanY, 2);
+    }
+
+    return numerator / Math.sqrt(denominatorX * denominatorY);
+}
+
+function calculateAverageInterval(data) {
+    if(data.length < 2) return 0;
+    
+    // Filtra dados para considerar apenas o período selecionado
+    const filteredData = data.filter(entry => {
+        const age = Date.now() - entry.timestamp;
+        switch(periodoSelecionado) {
+            case '24h': return age <= 86400000;
+            case 'semana': return age <= 604800000;
+            case 'mes': return age <= 2592000000;
+            default: return true;
+        }
+    });
+
+    let total = 0;
+    for (let i = 1; i < filteredData.length; i++) {
+        total += filteredData[i].timestamp - filteredData[i-1].timestamp;
+    }
+    return (total / (filteredData.length - 1)) / (1000 * 60);
+}
+function formatTime(minutes) {
+    if (minutes < 60) {
+        return `${minutes.toFixed(2)} minutos`;
+    }
+    
+    const horas = Math.floor(minutes / 60);
+    const min = Math.round(minutes % 60);
+    
+    if (min === 0) {
+        return `${horas} horas`;
+    }
+    return `${horas} horas e ${min} minutos`;
+}
+
+function displayResults(resultados) {
+    const { tStart, tEnd } = resultados.period;
+    const { above, below, within } = resultados.percentuais;
+    
+    const diasTotal = (tEnd - tStart) / (1000 * 3600 * 24);
+    
+    const html = `
+        
+            
+                
+                <!-- Metadados -->
+                <div class="mt-4 text-muted">
+                
+                    Período analisado: ${historicalData[0].timestamp.toLocaleDateString()} 
+                    a ${historicalData[historicalData.length-1].timestamp.toLocaleDateString()}
+                
+                <li>Tempo de coleta: ${historicalData.length} horas</li>  
+               
+                <li>Variação externa para 1°C na água: ${resultados.variacaoAgua.toFixed(2)}°C</li>
+                <li>Variação externa para 1°C na estufa: ${resultados.variacaoInterna.toFixed(2)}°C</li>
+                <li>Tempo de reflexão água: ${formatTime(resultados.tempoReflexao)}</li>
+                <br><br>    
+                
+                <h5 class="card-title">Indicador de conforto térmico</h5>
+                <div style="height: 20px;"></div>
+                <!-- Barra de Progresso -->
+                <div class="progress mb-3" style="height: 30px;">
+                    <div class="progress-bar bg-success" 
+                         style="width: ${within}%" 
+                         title="Dentro dos limites">
+                        ${within.toFixed(1)}%
+                    </div>
+                    <div class="progress-bar bg-danger" 
+                         style="width: ${above}%" 
+                         title="Acima do máximo">
+                        ${above.toFixed(1)}%
+                    </div>
+                    <div class="progress-bar bg-warning" 
+                         style="width: ${below}%" 
+                         title="Abaixo do mínimo">
+                        ${below.toFixed(1)}%
+                    </div>
+                </div>
+
+                <!-- Legenda -->
+                <div class="row">
+                    <div class="col-md-4">
+                        <span class="badge bg-success">Conforto térmico: ${within.toFixed(1)}%</span>
+                    </div>
+                    <div class="col-md-4">
+                        <span class="badge bg-danger">Estresse por calor: ${above.toFixed(1)}%</span>
+                    </div>
+                    <div class="col-md-4">
+                        <span class="badge bg-warning">Estresse por frio: ${below.toFixed(1)}%</span>
+                    </div>
+                </div>
+
+                </div>
+        
+    `;
+
+    document.getElementById('regressionResults').innerHTML = html;
+}
+
+        
+
+
+
+// Adicione estas variáveis no início com as outras referências
+const ventiladorRef = database.ref('ventilador');
+const ventiladorBtn = document.getElementById('ventiladorBtn');
+const ventiladorStatus = document.querySelector('.ventilador-status');
+
+// Função para controlar o ventilador
+function toggleVentilador() {
+    const novoEstado = ventiladorBtn.classList.contains('active') ? 0 : 1;
+    
+    ventiladorRef.set(novoEstado)
+        .then(() => {
+            exibirNotificacao(`Ventilador ${novoEstado ? 'ligado' : 'desligado'}`, 'success');
+        })
+        .catch((error) => {
+            exibirNotificacao(`Erro ao controlar ventilador: ${error.message}`, 'danger');
+        });
+}
+
+// Monitorar estado do ventilador
+ventiladorRef.on('value', (snapshot) => {
+    const estado = snapshot.val();
+    if (estado === 1) {
+        ventiladorBtn.classList.add('active');
+        ventiladorStatus.textContent = 'LIGADO';
+        ventiladorBtn.querySelector('.bi-fan').style.animationPlayState = 'running';
+    } else {
+        ventiladorBtn.classList.remove('active');
+        ventiladorStatus.textContent = 'DESLIGADO';
+        ventiladorBtn.querySelector('.bi-fan').style.animationPlayState = 'paused';
+    }
+});
+
+// Adicionar evento de clique
+ventiladorBtn.addEventListener('click', toggleVentilador);
+
+
+        // Adicione no final do window.onload
+        window.onload = function() {
+            // ... código existente ...
+            carregarConfig();
+            lerSensores();
+            lerTemperaturas();
+            prepareData();
+            setTimeout(runAnalysis, 5000); // Executar após 5 segundos
+        };
+                setInterval(atualizarTemperaturas, 3000);
+                
+    </script>
+</body>
+</html>
