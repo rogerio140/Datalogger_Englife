@@ -1539,10 +1539,7 @@ document.getElementById('configForm').addEventListener('submit', function(e) {
             configuracaoAtual = novoConfig;
             $('#configModal').modal('hide');
         })
-        .catch(error => {
-            exibirNotificacao('Erro ao salvar configurações!', 'danger');
-            console.error(error);
-        });
+        
 });
 
 
