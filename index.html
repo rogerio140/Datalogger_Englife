@@ -244,6 +244,33 @@
     transition: width 0.5s linear;
 }
 
+/* Estilos para o modal de configurações */
+#configModal .card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+#configModal .card:hover {
+    transform: translateY(-2px);
+}
+
+#configModal .card-header {
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+#configModal .form-label {
+    font-weight: 500;
+    color: #444;
+}
+
+#configModal input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.5);
+}
+
+
+
+
     </style>
 </head>
 <body>
@@ -449,7 +476,9 @@
                     <!-- Notificação e Alertas -->
                     <div id="notification" class="alert alert-success" role="alert"></div>
                     <div id="alertContainer" class="alert-container"></div>
-
+                <button class="btn btn-secondary" onclick="abrirConfiguracoes()">
+                ⚙️ Configurações
+                </button>
                     
             </div>
            <!-- Adicione esta seção após os cards de temperatura -->
@@ -460,80 +489,150 @@
             <img src="ajuda.png" alt="Ajuda">
         </a>
 
-<!-- Botão de Calibração -->
-<div class="text-center mt-4">
-    <button class="btn btn-warning" onclick="iniciarCalibracao()" id="btnCalibracao">
-        Iniciar Calibração do Alimentador
-    </button>
-</div>
 
-        <!-- Modal de Calibração -->
-<div class="modal fade" id="calibracaoModal" tabindex="-1" aria-labelledby="calibracaoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+        
+        <!-- Modal de Configurações -->
+<div class="modal fade" id="configModal" tabindex="-1" aria-labelledby="configModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title" id="calibracaoModalLabel">🔧 Calibração do Sistema</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="configModalLabel">Configurações do Alimentador</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div id="etapa0">
-                    <h5 class="text-center mb-4">Instruções Iniciais</h5>
-                    <ol>
-                        <li>Posicione o recipiente VAZIO na balança</li>
-                        <li>Certifique-se que o sistema está estável</li>
-                        <li>Clique em "Iniciar Calibração" abaixo</li>
-                    </ol>
-                    <div class="text-center">
-                        <button class="btn btn-warning" onclick="iniciarEtapa(1)">Iniciar Calibração</button>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-warning">
+                                <h5 class="card-title mb-0">Calibração</h5>
+                            </div>
+                            <div class="card-body text-center">
+                                <button class="btn btn-warning" onclick="iniciarCalibracao()">
+                                    🔧 Iniciar Calibração
+                                </button>
+                                <p class="text-muted mt-2">Calibre o sistema de dosagem</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
-
-                <div id="etapa1" style="display: none;">
-                    <div class="alert alert-info">
-                        <strong>Etapa 1/3:</strong> Motor ligado por <span id="tempo1Value"></span> segundos
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="card-title mb-0">Configurações de Alimentação</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="configForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">Horário Início</label>
+                                        <input type="time" class="form-control" id="horarioInicio" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Horário Fim</label>
+                                        <input type="time" class="form-control" id="horarioFim" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Peso Diário (gramas)</label>
+                                        <input type="number" class="form-control" id="pesoDiario" min="0" step="10" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Número de Porções</label>
+                                        <input type="number" class="form-control" id="porcoes" min="1" max="10" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Lançamentos por Dia</label>
+                                        <input type="number" class="form-control" id="lancamentos" min="1" max="10" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Intervalo (minutos)</label>
+                                        <input type="number" class="form-control" id="intervalo" min="5" max="120" required>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-success w-100">
+                                        💾 Salvar Configurações
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
-                    <div class="progress mb-3">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                            id="progressEtapa1" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <div id="etapa2" style="display: none;">
-                    <div class="alert alert-primary">
-                        <strong>Etapa 2/3:</strong> Aguarde e Insira o peso medido após a primeira descarga
-                    </div>
-                    <div class="input-group mb-3">
-                        <input type="number" id="peso1Input" class="form-control" 
-                               placeholder="Peso em gramas" step="1" min="0">
-                        <span class="input-group-text">gramas</span>
-                    </div>
-                    <button class="btn btn-primary w-100" onclick="avancarParaEtapa3()">Confirmar Peso</button>
-                </div>
-
-                <div id="etapa3" style="display: none;">
-                    <div class="alert alert-info">
-                        <strong>Etapa 3/3:</strong> Motor ligado por <span id="tempo2Value"></span> segundos
-                    </div>
-                    <div class="progress mb-3">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                            id="progressEtapa3" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <div id="etapa4" style="display: none;">
-                    <div class="alert alert-success">
-                        <strong>Etapa Final:</strong> Aguarde e Insira o peso medido após a segunda descarga
-                    </div>
-                    <div class="input-group mb-3">
-                        <input type="number" id="peso2Input" class="form-control" 
-                               placeholder="Peso em gramas" step="1" min="0">
-                        <span class="input-group-text">gramas</span>
-                    </div>
-                <button class="btn btn-success w-100" onclick="finalizarCalibracao()">Finalizar Calibração</button>
                 </div>
             </div>
         </div>
     </div>
+</div>    
+        
+
+                <!-- Modal de Calibração -->
+        <div class="modal fade" id="calibracaoModal" tabindex="-1" aria-labelledby="calibracaoModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning">
+                        <h5 class="modal-title" id="calibracaoModalLabel">🔧 Calibração do Sistema</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="etapa0">
+                            <h5 class="text-center mb-4">Instruções Iniciais</h5>
+                            <ol>
+                                <li>Posicione o recipiente VAZIO na balança</li>
+                                <li>Certifique-se que o sistema está estável</li>
+                                <li>Clique em "Iniciar Calibração" abaixo</li>
+                            </ol>
+                            <div class="text-center">
+                                <button class="btn btn-warning" onclick="iniciarEtapa(1)">Iniciar Calibração</button>
+                            </div>
+                        </div>
+
+                        <div id="etapa1" style="display: none;">
+                            <div class="alert alert-info">
+                                <strong>Etapa 1/3:</strong> Motor ligado por <span id="tempo1Value"></span> segundos
+                            </div>
+                            <div class="progress mb-3">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                    id="progressEtapa1" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div id="etapa2" style="display: none;">
+                            <div class="alert alert-primary">
+                                <strong>Etapa 2/3:</strong> Aguarde e Insira o peso medido após a primeira descarga
+                            </div>
+                            <div class="input-group mb-3">
+                                <input type="number" id="peso1Input" class="form-control" 
+                                    placeholder="Peso em gramas" step="1" min="0">
+                                <span class="input-group-text">gramas</span>
+                            </div>
+                            <button class="btn btn-primary w-100" onclick="avancarParaEtapa3()">Confirmar Peso</button>
+                        </div>
+
+                        <div id="etapa3" style="display: none;">
+                            <div class="alert alert-info">
+                                <strong>Etapa 3/3:</strong> Motor ligado por <span id="tempo2Value"></span> segundos
+                            </div>
+                            <div class="progress mb-3">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                    id="progressEtapa3" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div id="etapa4" style="display: none;">
+                            <div class="alert alert-success">
+                                <strong>Etapa Final:</strong> Aguarde e Insira o peso medido após a segunda descarga
+                            </div>
+                            <div class="input-group mb-3">
+                                <input type="number" id="peso2Input" class="form-control" 
+                                    placeholder="Peso em gramas" step="1" min="0">
+                                <span class="input-group-text">gramas</span>
+                            </div>
+                        <button class="btn btn-success w-100" onclick="finalizarCalibracao()">Finalizar Calibração</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1385,6 +1484,69 @@ function iniciarContagemRegressiva(segundos, elementId, callback) {
         }
     }, 1000);
 }
+
+
+
+
+
+
+
+
+// Variável global para configurações
+let configuracaoAtual = {};
+
+// Abrir modal de configurações
+function abrirConfiguracoes() {
+    const modal = new bootstrap.Modal(document.getElementById('configModal'));
+    
+    // Carregar configurações do Firebase
+    firebase.database().ref('config').once('value').then(snapshot => {
+        configuracaoAtual = snapshot.val();
+        preencherFormulario(configuracaoAtual);
+        modal.show();
+    }).catch(error => {
+        exibirNotificacao('Erro ao carregar configurações!', 'danger');
+        console.error(error);
+    });
+}
+
+// Preencher formulário com dados atuais
+function preencherFormulario(dados) {
+    document.getElementById('horarioInicio').value = dados.horarioInicio;
+    document.getElementById('horarioFim').value = dados.horarioFim;
+    document.getElementById('pesoDiario').value = dados.pesoDiario;
+    document.getElementById('porcoes').value = dados.porcoes;
+    document.getElementById('lancamentos').value = dados.lancamentos;
+    document.getElementById('intervalo').value = dados.intervalo;
+}
+
+// Salvar configurações
+document.getElementById('configForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const novoConfig = {
+        horarioInicio: document.getElementById('horarioInicio').value,
+        horarioFim: document.getElementById('horarioFim').value,
+        pesoDiario: parseInt(document.getElementById('pesoDiario').value),
+        porcoes: parseInt(document.getElementById('porcoes').value),
+        lancamentos: parseInt(document.getElementById('lancamentos').value),
+        intervalo: parseInt(document.getElementById('intervalo').value)
+    };
+
+    firebase.database().ref('config').update(novoConfig)
+        .then(() => {
+            exibirNotificacao('Configurações salvas com sucesso!', 'success');
+            configuracaoAtual = novoConfig;
+            $('#configModal').modal('hide');
+        })
+        .catch(error => {
+            exibirNotificacao('Erro ao salvar configurações!', 'danger');
+            console.error(error);
+        });
+});
+
+
+
 
 
 
