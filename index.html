@@ -121,9 +121,15 @@
             font-size: 16px;
         }
         #notification {
-            display: none;
-            margin-top: 20px;
-        }
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 99999;
+    min-width: 300px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
         /* Ajuste no body para o gradiente principal */
     body {
         background: linear-gradient(
