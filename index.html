@@ -564,7 +564,7 @@
                                     
                                     <div class="mb-3">
                                         <label class="form-label">Intervalo (minutos)</label>
-                                        <input type="number" class="form-control" id="intervalo" min="5" max="120" required>
+                                        <input type="number" class="form-control" id="intervalo" min="1" max="120" required>
                                     </div>
                                     
                                     <button type="submit" class="btn btn-success w-100">
@@ -1557,15 +1557,17 @@ document.getElementById('configForm').addEventListener('submit', function(e) {
         pesoDiario: parseInt(document.getElementById('pesoDiario').value),
         porcoes: parseInt(document.getElementById('porcoes').value),
         lancamentos: parseInt(document.getElementById('lancamentos').value),
-        intervalo: parseInt(document.getElementById('intervalo').value)
+        intervalo: parseInt(document.getElementById('intervalo').value),
+        ativa: true // Adiciona esta linha
     };
 
     firebase.database().ref('config').update(novoConfig)
         .then(() => {
-            exibirNotificacao('Configurações salvas com sucesso!', 'success');
+            exibirNotificacao('Configurações salvas e alimentador ativado!', 'success');
             configuracaoAtual = novoConfig;
             $('#configModal').modal('hide');
         })
+        
         
 });
 
