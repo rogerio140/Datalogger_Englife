@@ -125,10 +125,19 @@
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 99999;
+    z-index: 9999;
+    display: none;
     min-width: 300px;
     text-align: center;
+    padding: 15px 25px;
+    border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+#notification.show {
+    opacity: 1;
 }
         /* Ajuste no body para o gradiente principal */
     body {
@@ -901,14 +910,26 @@
         }
 
         function exibirNotificacao(mensagem, tipo) {
-            const notification = document.getElementById('notification');
-            notification.textContent = mensagem;
-            notification.classList.remove('alert-success', 'alert-danger');
-            notification.classList.add(tipo === 'success' ? 'alert-success' : 'alert-danger');
-            notification.style.display = 'block';
+    const notification = document.getElementById('notification');
+    if (!mensagem) return; // Não exibe se não houver mensagem
 
-            setTimeout(() => notification.style.display = 'none', 5000);
-        }
+    notification.textContent = mensagem;
+    notification.classList.remove('alert-success', 'alert-danger', 'show');
+    
+    // Reset animation
+    void notification.offsetWidth;
+    
+    notification.classList.add(tipo === 'success' ? 'alert-success' : 'alert-danger');
+    notification.style.display = 'block';
+    notification.classList.add('show');
+
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 300);
+    }, 5000);
+}
 
         function baixarDados(tipo) {
             const header = 'Data\tHora\tTemperatura Água\tTemperatura Estufa\tTemperatura Externa';
