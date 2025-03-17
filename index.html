@@ -283,6 +283,42 @@
     filter: invert(0.5);
 }
 
+/* Estilos dos horários */
+.horario-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s;
+}
+
+.horario-item:last-child {
+    border-bottom: none;
+}
+
+.horario-item:hover {
+    background-color: #f8f9fa;
+}
+
+.horario-hora {
+    font-weight: 500;
+    color: #2c3e50;
+    min-width: 80px;
+}
+
+.horario-porcao {
+    color: #6c757d;
+    font-size: 0.9em;
+}
+
+.horario-peso {
+    background-color: #e3f2fd;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-weight: 500;
+    color: #0d6efd;
+}
 
 
 
@@ -349,73 +385,71 @@
             </div>
     
             <!-- Botões -->
+<!-- Botões -->
 <div class="text-center mt-4">
-    
-    <label for="monthPicker" title="Selecionar mês específico">Escolha um mês:</label>
-    <div class="btn-group" style="min-width: 200px;">
-        <input type="month" id="monthPicker" class="form-control" 
-               onchange="atualizarPorMes()"
-               min="2023-01" 
-               max="2025-12"
-               title="Selecionar mês específico">
-    </div>
-    <!-- Dropdown para seleção de período -->
-    <div class="btn-group" style="min-width: 200px;">
-        <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-            Selecionar Período
-        </button>
-        <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('24h')">Últimas 24 horas</a></li>
-            <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('semana')">Última Semana</a></li>
-            <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('mes')">Último Mês</a></li>
-            <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('ano')">Registro completo</a></li>
-        </ul>
-    </div>
+    <div class="d-flex flex-wrap justify-content-center gap-2 gap-md-3">
+        <!-- Month Picker -->
+        <div class="btn-group flex-shrink-0" style="min-width: 200px;">
+            <label for="monthPicker" class="form-label mb-0 align-self-center me-1">Escolha um Mês:</label>
+            <input type="month" id="monthPicker" class="form-control" 
+                   onchange="atualizarPorMes()"
+                   min="2023-01" 
+                   max="2025-12"
+                   title="Selecionar mês específico">
+        </div>
 
-    <!-- Dropdown para opções de download -->
-    <div class="btn-group" style="min-width: 200px;">
-        <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-            Baixar Dados
-        </button>
-        <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#" onclick="baixarDados('xlsx')">Baixar em XLSX</a></li>
-            <li><a class="dropdown-item" href="#" onclick="baixarDados('txt')">Baixar em TXT</a></li>
-        </ul>
+        <!-- Dropdown Período -->
+        <div class="btn-group flex-shrink-0" style="min-width: 200px;">
+            <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                Selecionar Período
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('24h')">Últimas 24 horas</a></li>
+                <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('semana')">Última Semana</a></li>
+                <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('mes')">Último Mês</a></li>
+                <li><a class="dropdown-item" href="#" onclick="selecionarPeriodo('ano')">Registro completo</a></li>
+            </ul>
+        </div>
+
+        <!-- Dropdown Download -->
+        <div class="btn-group flex-shrink-0" style="min-width: 200px;">
+            <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                Baixar Dados
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#" onclick="baixarDados('xlsx')">Baixar em XLSX</a></li>
+                <li><a class="dropdown-item" href="#" onclick="baixarDados('txt')">Baixar em TXT</a></li>
+            </ul>
+        </div>
+
+        <!-- Dropdown Sensores -->
+        <div class="btn-group flex-shrink-0" style="min-width: 200px;">
+            <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                Selecionar Sensores
+            </button>
+            <ul class="dropdown-menu">
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="toggleAgua" checked>
+                        <label class="form-check-label" for="toggleAgua">Água</label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="toggleEstufa" checked>
+                        <label class="form-check-label" for="toggleEstufa">Ar Estufa</label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="toggleExterno" checked>
+                        <label class="form-check-label" for="toggleExterno">Ar Externo</label>
+                    </div>
+                </li>
+            </ul>
+        </div>
     </div>
-    <!-- Adicione este código após os botões de download -->
-    <div class="btn-group" style="min-width: 200px;">
-    
-        <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" >
-            Selecionar Sensores  
-        </button>
-        <ul class="dropdown-menu">
-            <li class="dropdown-item">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="toggleAgua" checked>
-                    <label class="form-check-label" for="toggleAgua">
-                        Água
-                    </label>
-                </div>
-            </li>
-            <li class="dropdown-item">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="toggleEstufa" checked>
-                    <label class="form-check-label" for="toggleEstufa">
-                        Ar Estufa
-                    </label>
-                </div>
-            </li>
-            <li class="dropdown-item">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="toggleExterno" checked>
-                    <label class="form-check-label" for="toggleExterno">
-                        Ar Externo
-                    </label>
-                </div>
-            </li>
-        </ul>
-    </div>
-    <div class="btn-group">
+</div>
 
 </div>
         <div class="col-md-12 mt-4">
@@ -491,10 +525,16 @@
                     <!-- Notificação e Alertas -->
                     <div id="notification" class="alert alert-success" role="alert"></div>
                     <div id="alertContainer" class="alert-container"></div>
-                <button class="btn btn-secondary" onclick="abrirConfiguracoes()">
-                ⚙️ Configurações
-                </button>
-                    
+                    <div class="text-center mt-4">
+                        <div class="d-flex flex-md-row flex-column justify-content-center gap-md-3 gap-2">
+                            <button class="btn btn-secondary mb-md-0 mb-2" onclick="abrirConfiguracoes()">
+                                ⚙️ Configurações do Alimentador
+                            </button>
+                            <button class="btn btn-info" onclick="mostrarHorarios()">
+                                🕒 Ver Horários Agendados
+                            </button>
+                        </div>
+                    </div>
             </div>
            <!-- Adicione esta seção após os cards de temperatura -->
 
@@ -525,6 +565,7 @@
                                 <button class="btn btn-warning" onclick="iniciarCalibracao()">
                                     🔧 Iniciar Calibração
                                 </button>
+                               
                                 <p class="text-muted mt-2">Calibre o sistema de dosagem</p>
                             </div>
                         </div>
@@ -549,17 +590,17 @@
                                     
                                     <div class="mb-3">
                                         <label class="form-label">Peso Diário (gramas)</label>
-                                        <input type="number" class="form-control" id="pesoDiario" min="0" step="10" required>
+                                        <input type="number" class="form-control" id="pesoDiario" min="0" step="100" required>
                                     </div>
                                     
                                     <div class="mb-3">
                                         <label class="form-label">Número de Porções</label>
-                                        <input type="number" class="form-control" id="porcoes" min="1" max="10" required>
+                                        <input type="number" class="form-control" id="porcoes" min="1" max="100" required>
                                     </div>
                                     
                                     <div class="mb-3">
                                         <label class="form-label">Lançamentos por Dia</label>
-                                        <input type="number" class="form-control" id="lancamentos" min="1" max="10" required>
+                                        <input type="number" class="form-control" id="lancamentos" min="1" max="100" required>
                                     </div>
                                     
                                     <div class="mb-3">
@@ -570,6 +611,8 @@
                                     <button type="submit" class="btn btn-success w-100">
                                         💾 Salvar Configurações
                                     </button>
+                                    
+                                    
                                 </form>
                             </div>
                         </div>
@@ -579,7 +622,26 @@
         </div>
     </div>
 </div>    
-        
+   
+<!-- Modal de Horários -->
+<div class="modal fade" id="horariosModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Horários Agendados</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="lista-horarios" class="list-group">
+                    <!-- Horários serão inseridos aqui -->
+                </div>
+                <div id="sem-horarios" class="text-muted text-center" style="display: none;">
+                    Nenhum horário agendado
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
                 <!-- Modal de Calibração -->
         <div class="modal fade" id="calibracaoModal" tabindex="-1" aria-labelledby="calibracaoModalLabel" aria-hidden="true">
@@ -1571,7 +1633,53 @@ document.getElementById('configForm').addEventListener('submit', function(e) {
         
 });
 
+function mostrarHorarios() {
+    const modal = new bootstrap.Modal('#horariosModal');
+    
+    firebase.database().ref('agendamento').once('value').then(snapshot => {
+        const data = snapshot.val();
+        atualizarListaHorarios(data);
+        modal.show();
+    }).catch(error => {
+        exibirNotificacao('Erro ao carregar horários!', 'danger');
+        console.error(error);
+    });
+}
 
+function atualizarListaHorarios(data) {
+    const container = document.getElementById('lista-horarios');
+    const emptyMsg = document.getElementById('sem-horarios');
+    
+    container.innerHTML = '';
+    
+    if(data && data.porcoes && data.numPorcoes) {
+        const numPorcoes = data.numPorcoes;
+        const porcoes = data.porcoes.slice(0, numPorcoes);
+        
+        porcoes.forEach((p, i) => {
+            if(p && p.hora !== undefined && p.minuto !== undefined) {
+                const div = document.createElement('div');
+                div.className = 'horario-item';
+                
+                div.innerHTML = `
+                    <div class="d-flex align-items-center gap-3">
+                        <div>
+                            <span class="horario-hora">${p.hora.toString().padStart(2, '0')}:${p.minuto.toString().padStart(2, '0')}</span>
+                            <span class="horario-porcao">Porção ${i + 1}</span>
+                        </div>
+                        <span class="horario-peso">${p.peso}g</span>
+                    </div>
+                `;
+                
+                container.appendChild(div);
+            }
+        });
+        
+        emptyMsg.style.display = container.children.length === 0 ? 'block' : 'none';
+    } else {
+        emptyMsg.style.display = 'block';
+    }
+}
 
 
 
