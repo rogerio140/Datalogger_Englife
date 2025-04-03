@@ -324,42 +324,42 @@
     text-align: center;
 }
 
-/* Adicione na seção de estilos */
-#btnMotorToggle {
+
+
+
+
+/*novo cardi alimentador manual */
+.btn-motor {
     transition: all 0.3s ease;
-    min-width: 140px;
+    position: relative;
+    overflow: hidden;
 }
 
-#btnMotorToggle.btn-danger {
-    background-color: #ffc107;
-    border-color: #ffc107;
+.btn-motor:active {
+    transform: scale(0.95);
 }
 
-#btnMotorToggle.btn-success {
-    background-color: #ffc107;
-    border-color: #28a745;
+.btn-motor::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
 }
 
-/* Estilos para o botão do motor */
-#btnMotorManual {
-    transition: all 0.3s ease;
-    min-width: 180px;
-    border: 2px solid #fff;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+.btn-motor:active::after {
+    width: 300px;
+    height: 300px;
 }
 
-#btnMotorManual.btn-danger {
-    background-color: #dc3545;
-}
 
-#btnMotorManual.btn-success {
-    background-color: #28a745;
-}
 
-#btnMotorManual:hover {
-    transform: scale(1.05);
-    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-}
+
 
     </style>
 </head>
@@ -570,7 +570,7 @@
                     <div class="text-center mt-4">
                         <div class="d-flex flex-md-row flex-column justify-content-center gap-md-3 gap-2">
                             <button class="btn btn-secondary mb-md-0 mb-2" onclick="abrirConfiguracoes()">
-                                🛠️ Configurações do Alimentador
+                                ⚙️ Configurações do Alimentador
                             </button>
                             <button class="btn btn-info" onclick="mostrarHorarios()">
                                 🕒 Ver Horários Agendados
@@ -610,6 +610,23 @@
                                
                                 <p class="text-muted mt-2">Calibre o sistema de dosagem</p>
                             </div>
+                            <div class="card mb-3">
+                                <div class="card-header bg-info">
+                                    <h5 class="card-title mb-0">Controle Manual</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label>Quantidade de Ração (gramas)</label>
+                                        <input type="number" id="manualFeedInput" class="form-control" min="0">
+                                    </div>
+                                    <button class="btn btn-info w-100 mb-2" onclick="enviarRacaoManual()">
+                                        🚜 Liberar Ração Manualmente
+                                    </button>
+                                    <button class="btn btn-danger w-100" onclick="acionarMotor()">
+                                        ⚡ Acionar Motor Agora
+                                    </button>
+                                </div>
+                    </div>   
                         </div>
                     </div>
                     
@@ -691,24 +708,24 @@
                 <div class="modal-content">
                     <div class="modal-header bg-warning">
                         <h5 class="modal-title" id="calibracaoModalLabel">🔧 Calibração do Sistema</h5>
-                        
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <div id="etapa0">
                             <h5 class="text-center mb-4">Instruções Iniciais</h5>
                             <ol>
+                                <li>Certifique se que o sistema esta carregado</li>
                                 <li>Posicione o recipiente VAZIO na balança</li>
                                 <li>Certifique-se que o sistema está estável</li>
                                 <li>Clique em "Iniciar Calibração" abaixo</li>
-                                ⚠️Caso o alimentador estiver vazio Clique em "Acionar Manualmente" até encher o sistema 
+                                <li>
+                                    Se o sistema estiver vazio, utilize o botão 
+                                    <span class="badge bg-info">⚡ Liberação Manual</span> 
+                                    para preencher o mecanismo de alimentação
+                                </
                             </ol>
                             <div class="text-center">
                                 <button class="btn btn-warning" onclick="iniciarEtapa(1)">Iniciar Calibração</button>
-                                 <!-- Botão de Acionamento Manual -->
-                                <button class="btn btn-warning" id="btnMotorManual" onclick="toggleMotorManual()">
-                                    ⚙️ Acionar Manualmente
-                                </button>
                             </div>
                         </div>
 
@@ -758,6 +775,7 @@
                     </div>
                 </div>
             </div>
+         
 </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1019,8 +1037,10 @@
             lerTemperaturas();
         }
 
-        function exibirNotificacao(mensagem, tipo) {
+        function exibirNotificacao(mensagem, tipo = 'info') {
     const notification = document.getElementById('notification');
+    notification.textContent = mensagem;
+    notification.className = `alert alert-${tipo} show`;
     if (!mensagem) return; // Não exibe se não houver mensagem
 
     notification.textContent = mensagem;
@@ -1729,60 +1749,33 @@ function atualizarListaHorarios(data) {
     }
 }
 
-// Adicione após as outras funções
-let motorState = 0;
-// Função para alternar o motor manualmente
-function toggleMotorManual() {
-    const btn = document.getElementById('btnMotorManual');
-    const db = firebase.database();
-    const isActive = btn.classList.contains('btn-success');
 
-    // Alternar estado
-    const newState = isActive ? 0 : 1;
-    
-    db.ref('motor').set(newState)
+function enviarRacaoManual() {
+    const peso = document.getElementById('manualFeedInput').value;
+    if (peso && peso > 0) {
+        firebase.database().ref('controle/peso').set(Number(peso))
+            .then(() => {
+                exibirNotificacao('Comando de liberação enviado!', 'success');
+                document.getElementById('manualFeedInput').value = '';
+            })
+            .catch(error => {
+                exibirNotificacao('Erro ao enviar comando!', 'danger');
+            });
+    } else {
+        alert('Insira um valor válido!');
+    }
+}
+
+function acionarMotor() {
+    firebase.database().ref('motor').set(1)
         .then(() => {
-            
-            btn.classList.toggle('btn-success', newState === 1);
-            btn.classList.toggle('btn-danger', newState === 0);
-            btn.innerHTML = `⚙️ ${newState === 1 ? 'Desativar' : 'Ativar'} Manualmente`;
-            exibirNotificacao(`Motor ${newState === 1 ? 'ATIVADO' : 'DESATIVADO'} manualmente`, 'success');
+            exibirNotificacao('Motor acionado!', 'success');
+            // O backend deve resetar para false após o tempo determinado
         })
         .catch(error => {
-            exibirNotificacao('Erro ao controlar motor: ' + error.message, 'danger');
+            exibirNotificacao('Erro ao acionar motor!', 'danger');
         });
 }
-
-// Monitorar estado do motor em tempo real
-firebase.database().ref('Manualmente').on('value', (snapshot) => {
-    const state = snapshot.val();
-    const btn = document.getElementById('btnMotorManual');
-    
-    if (btn) {
-        btn.classList.toggle('btn-success', state === 1);
-        btn.classList.toggle('btn-danger', state === 0);
-        btn.innerHTML = `⚙️ ${state === 1 ? 'Desativar' : 'Ativar'} Manualmente`;
-    }
-});
-
-
-
-function updateMotorButton(state) {
-    const btn = document.getElementById('btnMotorToggle');
-    motorState = state;
-    btn.classList.toggle('btn-danger', state === 0);
-    btn.classList.toggle('btn-success', state === 1);
-    btn.innerHTML = `⚙️${state === 1 ? 'Ativado' : 'Desativado'} Manualmente `;
-}
-
-// Adicione um listener para atualizações em tempo real
-database.ref('motor').on('value', (snapshot) => {
-    const state = snapshot.val();
-    if (state !== null) {
-        updateMotorButton(state);
-    }
-});
-
 
         // Adicione no final do window.onload
         window.onload = function() {
