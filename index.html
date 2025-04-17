@@ -1221,32 +1221,52 @@ function baixarDados(tipo) {
 let historicalData = [];
 
 async function prepareData() {
-    const ref = dbRefs[periodoSelecionado];
-    const snapshot = await ref.once('value');
-    const rawData = snapshot.val();
-    
-    historicalData = [];
-    
-    // Aplica filtro se for seleção personalizada
-    const filteredData = periodoSelecionado === 'personalizado' 
-        ? filtrarPorMes(rawData)
-        : rawData;
-
-    for (const timestamp in filteredData) {
-        const entry = filteredData[timestamp];
-        const [datePart, timePart] = timestamp.split('_');
-        const [year, month, day] = datePart.split('-');
-        const [hour, minute, second] = timePart.split('-');
+    try {
+        const ref = dbRefs[periodoSelecionado];
+        const snapshot = await ref.once('value');
+        const rawData = snapshot.val();
         
-        historicalData.push({
-            timestamp: new Date(year, month-1, day, hour, minute, second),
-            agua: parseFloat(entry.agua),
-            estufa: parseFloat(entry.estufa),
-            externa: parseFloat(entry.externa)
-        });
+        historicalData = [];
+        
+        let filteredData;
+        
+        // Aplicar filtro conforme o período selecionado
+        if (periodoSelecionado === 'personalizado') {
+            filteredData = filtrarPorMes(rawData);
+        } else {
+            filteredData = filtrarPorPeriodo(rawData, periodoSelecionado);
+        }
+
+        // Processar e ordenar os dados
+        for (const timestamp in filteredData) {
+            if (filteredData.hasOwnProperty(timestamp)) {
+                const entry = filteredData[timestamp];
+                const [datePart, timePart] = timestamp.split('_');
+                const [year, month, day] = datePart.split('-');
+                const [hour, minute, second] = timePart.split('-');
+                
+                historicalData.push({
+                    timestamp: new Date(year, month-1, day, hour, minute, second),
+                    agua: parseFloat(entry.agua) || 0,
+                    estufa: parseFloat(entry.estufa) || 0,
+                    externa: parseFloat(entry.externa) || 0
+                });
+            }
+        }
+
+        // Ordenar por timestamp
+        historicalData.sort((a, b) => a.timestamp - b.timestamp);
+
+        // Logs para debug
+        console.log('Período selecionado:', periodoSelecionado);
+        console.log('Dados filtrados:', historicalData.length, 'registros');
+        console.log('Primeiro registro:', historicalData[0]?.timestamp);
+        console.log('Último registro:', historicalData[historicalData.length-1]?.timestamp);
+
+    } catch (error) {
+        console.error('Erro no prepareData:', error);
+        throw new Error('Falha ao preparar dados para análise');
     }
-    
-    historicalData.sort((a, b) => a.timestamp - b.timestamp);
 }
 
 function getRefByPeriod() {
