@@ -816,9 +816,7 @@
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database(app);
         const sensoresRef = database.ref('sensores');
-        const temperaturasRef = database.ref('temperaturas');
-        const temperaturasSemanaRef = database.ref('temperaturas_semana');
-        const temperaturasMesRef = database.ref('temperaturas_mes');
+        
         const temperaturasAnoRef = database.ref('temperaturas_ano'); // Adicione esta linha com as outras refs
           // Adicione após a inicialização do Firebase
         const thresholdsRef = database.ref('alert_thresholds');
@@ -826,12 +824,13 @@
         const temp2Element = document.getElementById('temp2');
         const temp3Element = document.getElementById('temp3');
         
+        // Atualize o dbRefs para:
         const dbRefs = {
-            '24h': database.ref('temperaturas'),
-            'semana': database.ref('temperaturas_semana'),
-            'mes': database.ref('temperaturas_mes'),
-            'ano': database.ref('temperaturas_ano'),
-            'personalizado': database.ref('temperaturas_ano')
+            '24h': temperaturasAnoRef,
+            'semana': temperaturasAnoRef,
+            'mes': temperaturasAnoRef,
+            'ano': temperaturasAnoRef,
+            'personalizado': temperaturasAnoRef
         };
         let periodoSelecionado = '24h'; // Padrão para as últimas 24 horas
         let temp1 = [], temp2 = [], temp3 = [];
@@ -995,28 +994,29 @@
         }
 
         function lerTemperaturas() {
-            const ref = dbRefs[periodoSelecionado];
+    const ref = dbRefs[periodoSelecionado];
+    
+    ref.once('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            let filteredData;
             
-            ref.once('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    let filteredData = data;
-                    
-                    // Aplica filtro apenas para período personalizado
-                    if (periodoSelecionado === 'personalizado') {
-                        filteredData = filtrarPorMes(data);
-                    }
+            if (periodoSelecionado === 'personalizado') {
+                filteredData = filtrarPorMes(data);
+            } else {
+                filteredData = filtrarPorPeriodo(data, periodoSelecionado);
+            }
 
-                    processarDadosTemperatura(filteredData);
-                    prepareData().then(runAnalysis); // Atualiza análise automaticamente
-                } else {
-                    alert("Nenhum dado encontrado para o período selecionado.");
-                }
-            }).catch(error => {
-                console.error("Erro:", error);
-                alert("Erro ao carregar dados!");
-            });
+            processarDadosTemperatura(filteredData);
+            prepareData().then(runAnalysis);
+        } else {
+            alert("Nenhum dado encontrado para o período selecionado.");
         }
+    }).catch(error => {
+        console.error("Erro:", error);
+        alert("Erro ao carregar dados!");
+    });
+}
 
         function filtrarPorMes(data) {
             const filtered = {};
@@ -1061,75 +1061,88 @@
     }, 5000);
 }
 
-        function baixarDados(tipo) {
-            const header = 'Data\tHora\tTemperatura Água\tTemperatura Estufa\tTemperatura Externa';
-            const data = [header];
-
-            let ref;
-            switch (periodoSelecionado) {
-                case '24h':
-                    ref = temperaturasRef;
-                    break;
-                case 'semana':
-                    ref = temperaturasSemanaRef;
-                    break;
-                case 'mes':
-                    ref = temperaturasMesRef;
-                    break;
-                case 'ano':
-                    ref = temperaturasAnoRef;
-                    break;
-                case 'personalizado': // Novo caso para período personalizado
-                    ref = temperaturasAnoRef;
-                    break;
-                default:
-                    ref = temperaturasRef;
-            }
-
-            ref.once('value', (snapshot) => {
-                const rawData = snapshot.val();
-                let filteredData = rawData;
-
-                // Aplicar filtro apenas para período personalizado
-                if (periodoSelecionado === 'personalizado') {
-                    filteredData = filtrarPorMes(rawData);
-                }
-
-                for (const key in filteredData) {
-                    const tempData = filteredData[key];
-                    const [dataParte, horaParte] = key.split('_');
-                    const [ano, mes, dia] = dataParte.split('-');
-                    const [hora, minuto, segundo] = horaParte.split('-');
-                    const dataFormatada = `${dia}/${mes}/${ano}\t${hora}:${minuto}:${segundo}`;
-
-                    const linha = `${dataFormatada}\t${tempData.agua}\t${tempData.estufa}\t${tempData.externa}`;
-                    data.push(linha);
-                }
-
-                // Gerar nome do arquivo com período
-                let fileName = `Temperaturas_${periodoSelecionado}`;
-                if (periodoSelecionado === 'personalizado' && mesSelecionado && anoSelecionado) {
-                    fileName = `Temperaturas_${anoSelecionado}-${mesSelecionado.toString().padStart(2, '0')}`;
-                }
-
-                if (tipo === 'xlsx') {
-                    const ws = XLSX.utils.aoa_to_sheet(data.map(item => item.split('\t')));
-                    const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, ws, 'Temperaturas');
-                    XLSX.writeFile(wb, `${fileName}.xlsx`);
-                } else if (tipo === 'txt') {
-                    const blob = new Blob([data.join('\n')], { type: 'text/plain' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${fileName}.txt`;
-                    a.click();
-                }
-            }).catch(error => {
-                console.error("Erro ao baixar dados:", error);
-                exibirNotificacao('Erro ao baixar dados!', 'danger');
-            });
+function baixarDados(tipo) {
+    const ref = database.ref('temperaturas_ano');
+    
+    ref.once('value').then((snapshot) => {
+        const rawData = snapshot.val();
+        if (!rawData) {
+            exibirNotificacao('Nenhum dado encontrado para download!', 'warning');
+            return;
         }
+
+        // Aplicar filtro conforme período selecionado
+        let filteredData;
+        if (periodoSelecionado === 'personalizado' && mesSelecionado && anoSelecionado) {
+            filteredData = filtrarPorMes(rawData);
+        } else {
+            filteredData = filtrarPorPeriodo(rawData, periodoSelecionado);
+        }
+
+        if (Object.keys(filteredData).length === 0) {
+            exibirNotificacao('Nenhum dado no período selecionado!', 'warning');
+            return;
+        }
+
+        // Processar dados para download
+        const header = 'Data\tHora\tTemperatura Água (ºC)\tTemperatura Estufa (ºC)\tTemperatura Externa (ºC)';
+        const data = [header];
+
+        // Ordenar as chaves cronologicamente
+        const sortedKeys = Object.keys(filteredData).sort((a, b) => {
+            const dateA = new Date(a.replace('_', ' ').replace(/-/g, '/'));
+            const dateB = new Date(b.replace('_', ' ').replace(/-/g, '/'));
+            return dateA - dateB;
+        });
+
+        sortedKeys.forEach(key => {
+            const tempData = filteredData[key];
+            const [dataParte, horaParte] = key.split('_');
+            const [ano, mes, dia] = dataParte.split('-');
+            const [hora, minuto, segundo] = horaParte.split('-');
+            
+            const linha = [
+                `${dia}/${mes}/${ano}`,          // Data formatada DD/MM/YYYY
+                `${hora}:${minuto}:${segundo}`,  // Hora formatada HH:MM:SS
+                tempData.agua?.toFixed(2) || 'N/A', 
+                tempData.estufa?.toFixed(2) || 'N/A', 
+                tempData.externa?.toFixed(2) || 'N/A'
+            ].join('\t');
+
+            data.push(linha);
+        });
+
+        // Gerar nome do arquivo
+        let fileName = `Dados_Temperatura_${periodoSelecionado}`;
+        if (periodoSelecionado === 'personalizado') {
+            fileName = `Dados_Temperatura_${mesSelecionado.toString().padStart(2, '0')}-${anoSelecionado}`;
+        }
+
+        // Gerar arquivo
+        if (tipo === 'xlsx') {
+            const ws = XLSX.utils.aoa_to_sheet(data.map(item => item.split('\t')));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Temperaturas');
+            XLSX.writeFile(wb, `${fileName}.xlsx`);
+        } else if (tipo === 'txt') {
+            const blob = new Blob([data.join('\n')], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${fileName}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        exibirNotificacao(`Download iniciado: ${fileName}`, 'success');
+
+    }).catch(error => {
+        console.error('Erro ao baixar dados:', error);
+        exibirNotificacao('Falha ao baixar dados!', 'danger');
+    });
+}
 
 
       
@@ -1766,6 +1779,61 @@ function enviarRacaoManual() {
     }
 }
 
+function filtrarPorPeriodo(data, periodo) {
+    const agora = new Date();
+    const filtered = {};
+    
+    // Calcula o timestamp mínimo com base no período
+    let minTimestamp;
+    switch(periodo) {
+        case '24h':
+            minTimestamp = agora - (24 * 60 * 60 * 1000);
+            break;
+        case 'semana':
+            minTimestamp = agora - (7 * 24 * 60 * 60 * 1000);
+            break;
+        case 'mes':
+            minTimestamp = agora - (30 * 24 * 60 * 60 * 1000);
+            break;
+        case 'ano':
+            minTimestamp = 0; // Todos os dados
+            break;
+        default:
+            minTimestamp = 0;
+    }
+
+    for (const key in data) {
+        try {
+            // Converte a chave para timestamp
+            const [datePart, timePart] = key.split('_');
+            const [year, month, day] = datePart.split('-');
+            const [hour, min, sec] = timePart.split('-');
+            
+            const dataDate = new Date(
+                parseInt(year),
+                parseInt(month) - 1, // Meses são 0-based
+                parseInt(day),
+                parseInt(hour),
+                parseInt(min),
+                parseInt(sec)
+            );
+            
+            if (dataDate.getTime() >= minTimestamp) {
+                filtered[key] = data[key];
+            }
+        } catch (e) {
+            console.error('Erro ao processar entrada:', key, e);
+        }
+    }
+    
+    return filtered;
+}
+
+
+
+
+
+
 function acionarMotor() {
     firebase.database().ref('motor').set(1)
         .then(() => {
@@ -1787,6 +1855,14 @@ function acionarMotor() {
             setTimeout(runAnalysis, 5000); // Executar após 5 segundos
         };
                 setInterval(atualizarTemperaturas, 3000);
+               
+                
+
+
+
+
+
+
                 
     </script>
 </body>
