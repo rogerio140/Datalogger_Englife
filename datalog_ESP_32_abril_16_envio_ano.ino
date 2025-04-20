@@ -328,25 +328,20 @@ bool verificarHorarioColetaCustom(int tempoMinutos) {
 }
 
 
-void conectarWiFi(bool tentativaForcada = false) {
+void conectarWiFi() {
     if (wifiSSID == "" || wifiPassword == "") {
         Serial.println("SSID ou senha do Wi-Fi não configurados. Verifique o arquivo de configuração.");
         return;
     }
 
-    // Só reinicia as tentativas se for uma reconexão forçada
-    if(tentativaForcada) {
-        tentativasReconexao = 0;
-        WiFi.disconnect();
-    }
-    
-    // Verifica se já está conectado ou se excedeu o número de tentativas
-    if(WiFi.status() == WL_CONNECTED || tentativasReconexao >= maxTentativasReconexao) {
+    // Verifica se já está conectado
+    if (WiFi.status() == WL_CONNECTED) {
         return;
     }
 
     Serial.print("Conectando ao WiFi");
-    
+    //digitalWrite(LED_PIN, HIGH);  // Acende o LED no início da tentativa
+
     WiFi.begin(wifiSSID.c_str(), wifiPassword.c_str());
     
     // Timeout de 5 tentativas
@@ -355,12 +350,13 @@ void conectarWiFi(bool tentativaForcada = false) {
         Serial.print(".");
         delay(1000);
         timeout--;
-        tentativasReconexao++;
     }
+
+    //digitalWrite(LED_PIN, LOW);  // Apaga o LED ao final da tentativa
 
     if (WiFi.status() == WL_CONNECTED) {
         Serial.println("\nWiFi conectado!");
-        tentativasReconexao = 0; // Reseta o contador
+        tentativasReconexao = 0;
     } else {
         Serial.println("\nFalha na conexão. Tentativas restantes: " + String(maxTentativasReconexao - tentativasReconexao));
     }
@@ -443,7 +439,7 @@ void limparCaminho(const char* caminho) {
 
 void enviarTemperatura(const char* caminho, float valor) {
     int max_tentativas = 3; // Número máximo de tentativas
-    int delay_entre_tentativas = 2000; // Delay entre tentativas (5 segundos)
+    int delay_entre_tentativas = 1000; // Delay entre tentativas (5 segundos)
 
     for (int tentativa = 1; tentativa <= max_tentativas; tentativa++) {
         if (Firebase.setFloat(firebaseData, caminho, valor)) {
@@ -451,6 +447,35 @@ void enviarTemperatura(const char* caminho, float valor) {
         } else {
             if (tentativa < max_tentativas) {
                 delay(delay_entre_tentativas); // Aguarda antes de tentar novamente
+            }
+        }
+    }
+}
+void enviarString(const char* caminho, const char* valor) {
+    int max_tentativas = 3;
+    int delay_entre_tentativas = 2000;
+
+    for (int tentativa = 1; tentativa <= max_tentativas; tentativa++) {
+        if (Firebase.setString(firebaseData, caminho, valor)) {
+            return;
+        } else {
+            if (tentativa < max_tentativas) {
+                delay(delay_entre_tentativas);
+            }
+        }
+    }
+}
+
+void enviarInteiro(const char* caminho, int valor) {
+    int max_tentativas = 3;
+    int delay_entre_tentativas = 2000;
+
+    for (int tentativa = 1; tentativa <= max_tentativas; tentativa++) {
+        if (Firebase.setInt(firebaseData, caminho, valor)) {
+            return;
+        } else {
+            if (tentativa < max_tentativas) {
+                delay(delay_entre_tentativas);
             }
         }
     }
@@ -507,6 +532,13 @@ void setup() {
 
     registrarLeituras();
     enviarTemperatura("intervalo/intervalo", intervalo);
+    // Obter e enviar informações da rede Wi-Fi
+    if (WiFi.status() == WL_CONNECTED) {
+        String ssid = WiFi.SSID();
+        int rssi = WiFi.RSSI();
+        enviarString("rede/ssid", ssid.c_str());
+        enviarInteiro("rede/rssi", rssi);
+    }
     Serial.println("Enviando coleta diária!");
     //limparCaminho("/temperaturas/");
     //mostrarRegistrosPeriodo(nomeArquivo, "24h"); // Últimas 24 horas
@@ -514,7 +546,11 @@ void setup() {
     //mostrarRegistrosPeriodo(nomeArquivo, "semana"); // Últimos 7 dias
     //limparCaminho("/temperaturas_mes/");
     //mostrarRegistrosPeriodo(nomeArquivo, "mes"); // Últimos 30 dias
-    mostrarRegistrosPeriodo(nomeArquivo, "ano"); // Últimos 30 dias
+     // Se o Wi-Fi estiver conectado, realiza as operações
+        if (WiFi.status() == WL_CONNECTED) {
+      mostrarRegistrosPeriodo(nomeArquivo, "ano"); // Últimos 30 dias
+      Serial.println("\n coleta setup realizada!");
+        }
     ultimaColeta = rtc.now();
     ultimoEnvio = rtc.now();
     ultimaColetaSemanal= rtc.now();
@@ -522,18 +558,24 @@ void setup() {
 }
 void loop() {
     DateTime agora = rtc.now();
-
+    Serial.println("\n Iniciando Loop!");
     // Verifica se é hora de uma nova coleta diária (24h)
     if (verificarHorarioColetaCustom(intervalo) && agora != ultimoEnvio) {
         Serial.println("Hora de realizar uma nova coleta diária!");
         registrarLeituras();
-        
+        digitalWrite(LED_PIN, HIGH);
+        delay(1000);
+        conectarWiFi(); // Força nova tentativa de conexão
+        digitalWrite(LED_PIN, LOW); 
 
         // Se o Wi-Fi estiver conectado, realiza as operações
         if (WiFi.status() == WL_CONNECTED) {
            // registrarLeituras();
+           Serial.println("\n coleta do intervalo!");
             //mostrarRegistrosPeriodo(nomeArquivo, "ano"); // Últimos 30 dias
             enviarLeituras();
+            int rssi = WiFi.RSSI();
+            enviarInteiro("rede/rssi", rssi);
             //limparCaminho("/temperaturas/");
             //mostrarRegistrosPeriodo(nomeArquivo, "24h"); // Últimas 24 horas
             mostrarRegistrosPeriodo(nomeArquivo, "ano"); // Últimos 30 dias
@@ -554,13 +596,20 @@ void loop() {
     if (verificarHorarioColetaCustom(tempoPersonalizado) && agora != ultimaColeta) {
         // Tenta reconectar ao Wi-Fi se não estiver conectado
          // Tenta reconectar apenas se não excedeu o limite de tentativas
-         Serial.println("\n Verificando!");
-        if(WiFi.status() != WL_CONNECTED && tentativasReconexao < maxTentativasReconexao) {
-            conectarWiFi(true); // Força nova tentativa de conexão
-        }
+         Serial.println("\n Verificando conexão!");
+         
+        conectarWiFi(); // Força nova tentativa de conexão
+        // Obter e enviar informações da rede Wi-Fi
+        
         // Se o Wi-Fi estiver conectado, realiza as operações
         if (WiFi.status() == WL_CONNECTED) {
             enviarLeituras();
+            // Obter e enviar informações da rede Wi-Fi       
+            //String ssid = WiFi.SSID();
+            int rssi = WiFi.RSSI();
+            enviarInteiro("rede/rssi", rssi);
+            //enviarString("rede/ssid", ssid.c_str());
+            
         } 
 
         ultimaColeta = agora;

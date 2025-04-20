@@ -684,24 +684,49 @@
    
 <!-- Modal de Horários -->
 <div class="modal fade" id="horariosModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">Horários Agendados</h5>
+                <h5 class="modal-title">Horários Agendados e Histórico</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div id="lista-horarios" class="list-group">
-                    <!-- Horários serão inseridos aqui -->
+                <!-- Seção de Horários Agendados -->
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0">Agendamento Programado</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="lista-horarios" class="list-group list-group-flush">
+                            <!-- Horários serão inseridos aqui -->
+                        </div>
+                        <div id="sem-horarios" class="text-muted text-center p-3" style="display: none;">
+                            Nenhum horário agendado
+                        </div>
+                    </div>
                 </div>
-                <div id="sem-horarios" class="text-muted text-center" style="display: none;">
-                    Nenhum horário agendado
+
+                <!-- Card de Histórico -->
+                <div class="card">
+                    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Histórico de Alimentações</h6>
+                        <div id="total-racao" class="badge bg-light text-dark">Total: 0g</div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="historico-ativacoes" 
+                            class="list-group list-group-flush" 
+                            style="max-height: 300px; overflow-y: auto;">
+                            <!-- Itens do histórico -->
+                        </div>
+                        <div id="sem-historico" class="text-muted text-center p-3" style="display: none;">
+                            Nenhum registro histórico encontrado
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
                 <!-- Modal de Calibração -->
         <div class="modal fade" id="calibracaoModal" tabindex="-1" aria-labelledby="calibracaoModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -812,6 +837,7 @@
             projectId: "datalogeer",
             storageBucket: "datalogeer.appspot.com",
         };
+
 
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database(app);
@@ -1750,17 +1776,24 @@ function mostrarHorarios() {
 function atualizarListaHorarios(data) {
     const container = document.getElementById('lista-horarios');
     const emptyMsg = document.getElementById('sem-horarios');
-    
+    const historicoContainer = document.getElementById('historico-ativacoes');
+    const semHistoricoMsg = document.getElementById('sem-historico');
+    const totalElement = document.getElementById('total-racao');
+
+    // Limpar conteúdos anteriores
     container.innerHTML = '';
-    
-    if(data && data.porcoes && data.numPorcoes) {
+    historicoContainer.innerHTML = '';
+    totalElement.textContent = 'Total: 0g';
+
+    // ==================== [PARTE 1: HORÁRIOS AGENDADOS] ====================
+    if (data && data.porcoes && data.numPorcoes) {
         const numPorcoes = data.numPorcoes;
-        const porcoes = data.porcoes.slice(0, numPorcoes);
-        
+        const porcoes = Object.values(data.porcoes).slice(0, numPorcoes);
+
         porcoes.forEach((p, i) => {
-            if(p && p.hora !== undefined && p.minuto !== undefined) {
+            if (p && p.hora !== undefined && p.minuto !== undefined) {
                 const div = document.createElement('div');
-                div.className = 'horario-item';
+                div.className = 'list-group-item d-flex justify-content-between align-items-center';
                 
                 div.innerHTML = `
                     <div class="d-flex align-items-center gap-3">
@@ -1768,7 +1801,7 @@ function atualizarListaHorarios(data) {
                             <span class="horario-hora">${p.hora.toString().padStart(2, '0')}:${p.minuto.toString().padStart(2, '0')}</span>
                             <span class="horario-porcao">Porção ${i + 1}</span>
                         </div>
-                        <span class="horario-peso">${p.peso}g</span>
+                        <span class="horario-peso">${p.peso.toFixed(2)}g</span>
                     </div>
                 `;
                 
@@ -1780,8 +1813,59 @@ function atualizarListaHorarios(data) {
     } else {
         emptyMsg.style.display = 'block';
     }
-}
 
+    // ==================== [PARTE 2: HISTÓRICO DE ATIVAÇÕES] ====================
+    firebase.database().ref('historico').once('value').then(historicoSnapshot => {
+        const historicoData = historicoSnapshot.val();
+        let totalLiberado = 0;
+
+        if (historicoData) {
+            const historicoArray = Object.entries(historicoData)
+                .sort((a, b) => b[0].localeCompare(a[0])) // Ordena do mais recente
+                .slice(0, 50); // Limita a 50 registros
+
+            historicoArray.forEach(([timestamp, registro]) => {
+                try {
+                    // Processar timestamp
+                    const [dataParte, horaParte] = timestamp.split('_');
+                    const [ano, mes, dia] = dataParte.split('-');
+                    const [hora, minuto, segundo] = horaParte.split('-');
+
+                    // Calcular total
+                    if (registro.peso && !isNaN(registro.peso)) {
+                        totalLiberado += parseFloat(registro.peso);
+                    }
+
+                    // Criar elemento
+                    const div = document.createElement('div');
+                    div.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    
+                    div.innerHTML = `
+                        <div>
+                            <small class="text-muted">${dia}/${mes}/${ano}</small><br>
+                            <span class="fw-bold">${hora}:${minuto}:${segundo}</span>
+                            <span class="text-muted ms-2">${registro.tipo === 'manual' ? '✋ Manual' : '⏰ Agendado'}</span>
+                        </div>
+                        <span class="badge bg-primary rounded-pill">${parseFloat(registro.peso).toFixed(2)}g</span>
+                    `;
+
+                    historicoContainer.appendChild(div);
+                } catch (error) {
+                    console.error('Erro ao processar registro:', timestamp, error);
+                }
+            });
+
+            // Atualizar total
+            totalElement.textContent = `Total: ${totalLiberado.toFixed(2)}g`;
+            semHistoricoMsg.style.display = historicoArray.length === 0 ? 'block' : 'none';
+        } else {
+            semHistoricoMsg.style.display = 'block';
+        }
+    }).catch(error => {
+        console.error('Erro ao carregar histórico:', error);
+        semHistoricoMsg.style.display = 'block';
+    });
+}
 
 function enviarRacaoManual() {
     const peso = document.getElementById('manualFeedInput').value;
