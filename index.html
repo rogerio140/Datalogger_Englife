@@ -359,6 +359,60 @@
 
 
 
+/* Adicione ao seu <style> */
+    .btn-limpar {
+    background: linear-gradient(145deg, #aaf3f7 0%, #aaf3f7 100%);
+    color: #2c3e50 !important;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 15px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-limpar:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    background: linear-gradient(145deg, #aaf3f7 0%, #aaf3f7 100%);
+}
+
+.btn-limpar:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.bi-eraser-fill {
+    font-size: 1.1em;
+    margin-right: 5px;
+}
+
+
+/* Adicione ao seu CSS */
+.btn-aqua-gradient {
+    background: linear-gradient(145deg, #7fc5fa 0%, #aaf3f7 100%);
+    color: #2c3e50;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-aqua-gradient:hover {
+    background: linear-gradient(145deg, #6cb4e8 0%, #99e3e7 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.btn-aqua-gradient:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
 
 
     </style>
@@ -412,7 +466,7 @@
                 </div>
             </div>
  
-            <!-- Gráfico -->
+            
             <!-- Gráfico -->
             <div class="card">
                 <div class="card-body">
@@ -506,85 +560,113 @@
         </div>
                     
 
-        <div class="config-panel" id="configPanel">
-                <h4 class="text-center mb-4">Parâmetros de conforto Térmico</h4>
-                <div class="row">
-                    <!-- Configuração para Água -->
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Água</h5>
-                                <div class="mb-3">
-                                    <label>Máxima (°C)</label>
-                                    <input type="number" step="0.1" id="maxAgua" class="form-control">
-                                </div>
-                                <div class="mb-3">
-                                    <label>Mínima (°C)</label>
-                                    <input type="number" step="0.1" id="minAgua" class="form-control">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Configuração para Ar Estufa -->
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Ar Estufa</h5>
-                                <div class="mb-3">
-                                    <label>Máxima (°C)</label>
-                                    <input type="number" step="0.1" id="maxEstufa" class="form-control">
-                                </div>
-                                <div class="mb-3">
-                                    <label>Mínima (°C)</label>
-                                    <input type="number" step="0.1" id="minEstufa" class="form-control">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Configuração para Ar Externo -->
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Ar Externo</h5>
-                                <div class="mb-3">
-                                    <label>Máxima (°C)</label>
-                                    <input type="number" step="0.1" id="maxExterno" class="form-control">
-                                </div>
-                                <div class="mb-3">
-                                    <label>Mínima (°C)</label>
-                                    <input type="number" step="0.1" id="minExterno" class="form-control">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="text-center mt-4">
-                    <button class="btn btn-primary" onclick="salvarConfig()">Salvar Configurações</button>
-                </div>
-                    <!-- Repita para os outros sensores -->
+<!-- Painel Principal -->
+<div class="config-panel" id="configPanel">
+    <div class="text-center mt-4">
+        <div class="d-flex flex-md-row flex-column justify-content-center gap-md-3 gap-2">
+            <!-- Botões de Configuração -->
+            <button class="btn btn-aqua-gradient mb-md-0 mb-2" onclick="abrirConfiguracoes()">
+                ⚙️ Configurações do Alimentador
+            </button>
+            <button class="btn btn-aqua-gradient mb-md-0 mb-2" onclick="mostrarHorarios()">
+                🕒 Ver Horários Agendados
+            </button>
+            <button class="btn btn-aqua-gradient mb-md-0 mb-2" onclick="abrirVentiladorModal()">
+                🌀 Controle do Ventilador
+            </button>
+            <button class="btn btn-aqua-gradient mb-md-0 mb-2" onclick="abrirTermicoModal()">
+                🌡️ Parâmetros Térmicos
+            </button>
+        </div>
+    </div>
+    
+    <!-- Notificação e Alertas -->
+    <div id="notification" class="alert alert-success mt-3" role="alert" style="display: none;"></div>
+    <div id="alertContainer" class="alert-container mt-3"></div>
+</div>
                 
 
-                    <!-- Notificação e Alertas -->
-                    <div id="notification" class="alert alert-success" role="alert"></div>
-                    <div id="alertContainer" class="alert-container"></div>
-                    <div class="text-center mt-4">
-                        <div class="d-flex flex-md-row flex-column justify-content-center gap-md-3 gap-2">
-                            <button class="btn btn-secondary mb-md-0 mb-2" onclick="abrirConfiguracoes()">
-                                ⚙️ Configurações do Alimentador
-                            </button>
-                            <button class="btn btn-info" onclick="mostrarHorarios()">
-                                🕒 Ver Horários Agendados
-                            </button>
-                        </div>
-                    </div>
-            </div>
-           <!-- Adicione esta seção após os cards de temperatura -->
+           
 
         </div>
           
         <a href="https://wa.me/+5519996058199" class="help-icon" target="_blank">
             <img src="ajuda.png" alt="Ajuda">
         </a>
+
+<!-- Novo Modal de Parâmetros Térmicos -->
+<div class="modal fade" id="termicoModal" tabindex="-1" aria-labelledby="termicoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="termicoModalLabel">🌡️ Parâmetros de Conforto Térmico</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Configuração para Água -->
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Água</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Máxima (°C)</label>
+                                    <input type="number" step="0.1" id="maxAgua" class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Mínima (°C)</label>
+                                    <input type="number" step="0.1" id="minAgua" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Configuração para Ar Estufa -->
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Ar Estufa</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Máxima (°C)</label>
+                                    <input type="number" step="0.1" id="maxEstufa" class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Mínima (°C)</label>
+                                    <input type="number" step="0.1" id="minEstufa" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Configuração para Ar Externo -->
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Ar Externo</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Máxima (°C)</label>
+                                    <input type="number" step="0.1" id="maxExterno" class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Mínima (°C)</label>
+                                    <input type="number" step="0.1" id="minExterno" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle"></i> Estes parâmetros definem as faixas de temperatura ideais para o sistema.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarConfigTermica()">Salvar Configurações</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 
         
@@ -649,7 +731,7 @@
                                     
                                     <div class="mb-3">
                                         <label class="form-label">Peso Diário (gramas)</label>
-                                        <input type="number" class="form-control" id="pesoDiario" min="0" step="1" required>
+                                        <input type="number" class="form-control" id="pesoDiario" min="0" step="0.01" required>
                                     </div>
                                     
                                     <div class="mb-3">
@@ -723,10 +805,26 @@
                         </div>
                     </div>
                 </div>
+                <!-- Dentro do modal-body do #horariosModal -->
+                <div class="card">
+                    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                        <div class="d-flex gap-3"> <!-- Bootstrap gap + CSS personalizado -->
+                            <button class="btn btn-limpar" onclick="baixarHistorico()">
+                                📥 Baixar Histórico
+                            </button>
+                            
+                            <button class="btn btn-limpar" onclick="limparHistorico()">
+                                🗑️ Limpar Histórico
+                            </button>
+                        </div>
+                    </div>
+                    <!-- ... resto do código do histórico ... -->
+                </div>
             </div>
         </div>
     </div>
 </div>
+
                 <!-- Modal de Calibração -->
         <div class="modal fade" id="calibracaoModal" tabindex="-1" aria-labelledby="calibracaoModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -802,7 +900,120 @@
             </div>
          
 </div>
+<!-- Adicione este código após o modal de horários existente -->
+
+<!-- Modal do Ventilador -->
+<div class="modal fade" id="ventiladorModal" tabindex="-1" aria-labelledby="ventiladorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="ventiladorModalLabel">🔄 Controle do Ventilador</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Controle Manual -->
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="card-title mb-0">Controle Manual</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="modoManualVentilador">
+                                    <label class="form-check-label" for="modoManualVentilador">Modo Manual</label>
+                                </div>
+                                
+                                <div id="controleManualContainer" style="display: none;">
+                                    <div class="d-flex justify-content-center gap-3 mb-3">
+                                        <button class="btn btn-success" id="ligarVentiladorBtn">Ligar Ventilador</button>
+                                        <button class="btn btn-danger" id="desligarVentiladorBtn">Desligar Ventilador</button>
+                                    </div>
+                                    
+                                    <div class="alert alert-warning">
+                                        <small>⚠️ No modo manual, o sistema automático é desativado. 
+                                        Você assume total controle do ventilador.</small>
+                                    </div>
+                                </div>
+                                
+                                <div id="statusVentilador" class="text-center mt-3">
+                                    <div class="spinner-border text-primary spinner-border-sm" role="status"></div>
+                                    <span>Carregando status...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Configurações Automáticas -->
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="card-title mb-0">Configurações Automáticas</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="tempMaxVentilador" class="form-label">Temperatura Máxima (ºC)</label>
+                                    <input type="number" step="0.1" class="form-control" id="tempMaxVentilador">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="tempMinDesligar" class="form-label">Temperatura para Desligar (ºC)</label>
+                                    <input type="number" step="0.1" class="form-control" id="tempMinDesligar">
+                                </div>
+                                
+                                <button class="btn btn-success w-100" id="salvarConfigVentiladorBtn">
+                                    💾 Salvar Configurações
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Histórico de Operação -->
+                <div class="card">
+                    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Histórico de Operação</h5>
+                        <div>
+                            <button class="btn btn-sm btn-light" onclick="baixarHistoricoVentilador()">
+                                📥 Baixar
+                            </button>
+                            <button class="btn btn-sm btn-light" onclick="limparHistoricoVentilador()">
+                                🗑️ Limpar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Data/Hora</th>
+                                        <th>Estado</th>
+                                        <th>Modo</th>
+                                        <th>Temperatura</th>
+                                        <th>Duração</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historicoVentiladorBody">
+                                    <!-- Dados serão inseridos aqui -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="semHistoricoVentilador" class="text-center py-4 text-muted">
+                            Nenhum registro histórico encontrado
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
     </div>
+</div>
+
+
+</div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
@@ -811,6 +1022,13 @@
     <!-- Remova a linha anterior do ml-regression-multivariate-linear -->
     <script src="https://cdn.jsdelivr.net/npm/regression@2.0.1/dist/regression.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.2.0/math.min.js"></script>
+    <script>window.ignoreSourceMapWarning = true;</script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Certifique-se que o Bootstrap JS está carregado antes dos seus scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Carrega jQuery antes de seus scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Scripts -->
     <script>
         // Controle da tela de abertura
@@ -829,7 +1047,7 @@
             }, 3000); // 3 segundos de exibição
         });
 
-        // Restante do código Firebase...
+         // Restante do código Firebase...
         const firebaseConfig = {
             apiKey: "AIzaSyAMAf30UG0YOqaxF-KgD5gfAhWhddN-5Qg",
             authDomain: "datalogeer.firebaseapp.com",
@@ -1214,7 +1432,13 @@ function baixarDados(tipo) {
                         .catch((error) => exibirNotificacao('Erro ao salvar: ' + error.message, 'danger'));
                 }
 
-                function verificarAlertas(data) {
+function verificarAlertas(data) {
+    // Certifique-se que alertThresholds está carregado
+    if (!alertThresholds) {
+        console.warn("Limites de alerta não carregados");
+        return;
+    }
+
     const cards = {
         agua: document.getElementById('temp1'),
         estufa: document.getElementById('temp2'),
@@ -1225,25 +1449,28 @@ function baixarDados(tipo) {
         const valor = data[`temperatura_${sensor === 'agua' ? 3 : sensor === 'estufa' ? 2 : 1}`];
         const card = cards[sensor];
 
-        // Adiciona a classe de alerta ao card
-        card.classList.toggle('sensor-alert', valor > alertThresholds[sensor].max || valor < alertThresholds[sensor].min);
+        if (card && alertThresholds[sensor]) {
+            const max = alertThresholds[sensor].max;
+            const min = alertThresholds[sensor].min;
+            
+            card.classList.toggle('sensor-alert', valor > max || valor < min);
 
-        let alertIcon = card.querySelector('.alert-icon');
-
-        if (card.classList.contains('sensor-alert')) {
-            // Se o ícone ainda não foi adicionado, cria ele
-            if (!alertIcon) {
-                alertIcon = document.createElement('span');
-                alertIcon.classList.add('alert-icon');
-                alertIcon.innerHTML = '⚠️'; // Ícone de alerta amarelo
-                card.prepend(alertIcon); // Adiciona antes do texto do card
+            let alertIcon = card.querySelector('.alert-icon');
+            if (card.classList.contains('sensor-alert')) {
+                if (!alertIcon) {
+                    alertIcon = document.createElement('span');
+                    alertIcon.classList.add('alert-icon');
+                    alertIcon.innerHTML = '⚠️';
+                    card.prepend(alertIcon);
+                }
+            } else {
+                if (alertIcon) alertIcon.remove();
             }
-        } else {
-            // Remove o ícone se ele existir
-            if (alertIcon) alertIcon.remove();
         }
     });
 }
+
+
 let historicalData = [];
 
 async function prepareData() {
@@ -1743,7 +1970,7 @@ document.getElementById('configForm').addEventListener('submit', function(e) {
     const novoConfig = {
         horarioInicio: document.getElementById('horarioInicio').value,
         horarioFim: document.getElementById('horarioFim').value,
-        pesoDiario: parseInt(document.getElementById('pesoDiario').value),
+        pesoDiario: parseFloat(document.getElementById('pesoDiario').value),
         porcoes: parseInt(document.getElementById('porcoes').value),
         lancamentos: parseInt(document.getElementById('lancamentos').value),
         intervalo: parseInt(document.getElementById('intervalo').value),
@@ -1801,7 +2028,8 @@ function atualizarListaHorarios(data) {
                             <span class="horario-hora">${p.hora.toString().padStart(2, '0')}:${p.minuto.toString().padStart(2, '0')}</span>
                             <span class="horario-porcao">Porção ${i + 1}</span>
                         </div>
-                        <span class="horario-peso">${p.peso.toFixed(2)}g</span>
+                        <!-- LINHA CORRIGIDA (ANTES: parseFloat(p.peso).toFixed(2)) -->
+                        <span class="horario-peso">${(Math.round(Number(p.peso) * 100) / 100).toFixed(2)}g</span>
                     </div>
                 `;
                 
@@ -1821,22 +2049,19 @@ function atualizarListaHorarios(data) {
 
         if (historicoData) {
             const historicoArray = Object.entries(historicoData)
-                .sort((a, b) => b[0].localeCompare(a[0])) // Ordena do mais recente
-                .slice(0, 50); // Limita a 50 registros
+                .sort((a, b) => b[0].localeCompare(a[0]))
+                .slice(0, 50);
 
             historicoArray.forEach(([timestamp, registro]) => {
                 try {
-                    // Processar timestamp
                     const [dataParte, horaParte] = timestamp.split('_');
                     const [ano, mes, dia] = dataParte.split('-');
                     const [hora, minuto, segundo] = horaParte.split('-');
 
-                    // Calcular total
                     if (registro.peso && !isNaN(registro.peso)) {
                         totalLiberado += parseFloat(registro.peso);
                     }
 
-                    // Criar elemento
                     const div = document.createElement('div');
                     div.className = 'list-group-item d-flex justify-content-between align-items-center';
                     
@@ -1846,7 +2071,8 @@ function atualizarListaHorarios(data) {
                             <span class="fw-bold">${hora}:${minuto}:${segundo}</span>
                             <span class="text-muted ms-2">${registro.tipo === 'manual' ? '✋ Manual' : '⏰ Agendado'}</span>
                         </div>
-                        <span class="badge bg-primary rounded-pill">${parseFloat(registro.peso).toFixed(2)}g</span>
+                        <!-- LINHA CORRIGIDA (ANTES: parseFloat(registro.peso).toFixed(2)) -->
+                        <span class="badge bg-primary rounded-pill">${(Math.round(Number(registro.peso) * 100) / 100).toFixed(2)}g</span>
                     `;
 
                     historicoContainer.appendChild(div);
@@ -1855,7 +2081,6 @@ function atualizarListaHorarios(data) {
                 }
             });
 
-            // Atualizar total
             totalElement.textContent = `Total: ${totalLiberado.toFixed(2)}g`;
             semHistoricoMsg.style.display = historicoArray.length === 0 ? 'block' : 'none';
         } else {
@@ -1866,7 +2091,6 @@ function atualizarListaHorarios(data) {
         semHistoricoMsg.style.display = 'block';
     });
 }
-
 function enviarRacaoManual() {
     const peso = document.getElementById('manualFeedInput').value;
     if (peso && peso > 0) {
@@ -1960,14 +2184,537 @@ function acionarMotor() {
         };
                 setInterval(atualizarTemperaturas, 3000);
                
+                function limparHistorico() {
+    if (confirm('Tem certeza que deseja apagar todo o histórico? Esta ação é irreversível!')) {
+        firebase.database().ref('historico').remove()
+            .then(() => {
+                exibirNotificacao('Histórico limpo com sucesso!', 'success');
+                // Atualiza a lista imediatamente
+                document.getElementById('historico-ativacoes').innerHTML = '';
+                document.getElementById('total-racao').textContent = 'Total: 0g';
+                document.getElementById('sem-historico').style.display = 'block';
+            })
+            .catch((error) => {
+                exibirNotificacao('Erro ao limpar histórico: ' + error.message, 'danger');
+            });
+    }
+}              
+
+// Adicione estas funções ao seu script
+
+
+
+
+function baixarHistorico() {
+    const ref = database.ref('historico');
+    
+    ref.once('value').then(snapshot => {
+        const data = snapshot.val();
+        if (!data) {
+            exibirNotificacao('Nenhum histórico para baixar!', 'warning');
+            return;
+        }
+
+        // Formatar dados para CSV
+        let csvContent = "Data,Hora,Quantidade (g),Tipo\n";
+        
+        Object.entries(data).forEach(([timestamp, registro]) => {
+            const [dataParte, horaParte] = timestamp.split('_');
+            const dataFormatada = dataParte.split('-').reverse().join('/');
+            const horaFormatada = horaParte.replace(/-/g, ':');
+            
+            csvContent += `${dataFormatada},${horaFormatada},${registro.peso.toFixed(2)},${registro.tipo}\n`;
+        });
+
+        // Criar arquivo
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.href = url;
+        link.download = `historico_alimentacao_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`;
+        link.click();
+        
+        URL.revokeObjectURL(url);
+        exibirNotificacao('Download do histórico iniciado!', 'success');
+    });
+}
+
+
+
+// Função para abrir o modal do ventilador
+function abrirVentiladorModal() {
+    const modal = new bootstrap.Modal(document.getElementById('ventiladorModal'));
+    
+    // Carregar configurações atuais
+    firebase.database().ref('ventilador').once('value').then(snapshot => {
+        const data = snapshot.val();
+        
+        // Configurar modo manual
+        const modoManual = data?.manual || false;
+        document.getElementById('modoManualVentilador').checked = modoManual;
+        toggleControleManual(modoManual);
+        
+        // Configurar status atual
+        atualizarStatusVentilador(data?.estado || false);
+        
+        // Carregar configurações automáticas
+        firebase.database().ref('alert_thresholds/estufa').once('value').then(thresholds => {
+            const valores = thresholds.val();
+            if (valores) {
+                document.getElementById('tempMaxVentilador').value = valores.max;
+                document.getElementById('tempMinDesligar').value = valores.min - 2; // 2°C abaixo do limite
+            }
+        }).catch(error => {
+            console.error("Erro ao carregar thresholds:", error);
+        });
+        
+        // Carregar histórico
+        carregarHistoricoVentilador();
+        
+        modal.show();
+    }).catch(error => {
+        exibirNotificacao('Erro ao carregar configurações do ventilador!', 'danger');
+        console.error(error);
+    });
+}
+
+// Alternar entre modo manual/automático
+function toggleControleManual(ativo) {
+    const container = document.getElementById('controleManualContainer');
+    if (container) {
+        container.style.display = ativo ? 'block' : 'none';
+        
+        // Atualizar no Firebase
+        firebase.database().ref('ventilador/manual').set(ativo)
+            .catch(error => console.error("Erro ao atualizar modo manual:", error));
+    }
+}
+
+// Atualizar visualização do status
+function atualizarStatusVentilador(ligado) {
+    const statusElement = document.getElementById('statusVentilador');
+    if (statusElement) {
+        const modoManual = document.getElementById('modoManualVentilador')?.checked || false;
+        statusElement.innerHTML = `
+            <div class="d-flex align-items-center justify-content-center gap-2">
+                <div class="rounded-circle bg-${ligado ? 'success' : 'danger'}" 
+                     style="width: 15px; height: 15px;"></div>
+                <span>Ventilador ${ligado ? 'LIGADO' : 'DESLIGADO'} - Modo ${modoManual ? 'MANUAL' : 'AUTOMÁTICO'}</span>
+            </div>
+        `;
+    }
+}
+
+// Carregar histórico do ventilador
+function carregarHistoricoVentilador() {
+    firebase.database().ref('ventilador/historico').once('value').then(snapshot => {
+        const data = snapshot.val();
+        const tbody = document.getElementById('historicoVentiladorBody');
+        const emptyMsg = document.getElementById('semHistoricoVentilador');
+        
+        if (tbody) tbody.innerHTML = '';
+        
+        if (data && Object.keys(data).length > 0) {
+            if (emptyMsg) emptyMsg.style.display = 'none';
+            
+            // Ordenar por timestamp (mais recente primeiro)
+            const historicoOrdenado = Object.entries(data)
+                .sort((a, b) => b[0].localeCompare(a[0]))
+                .slice(0, 50);
+            
+            historicoOrdenado.forEach(([timestamp, registro]) => {
+                try {
+                    const [dataParte, horaParte] = timestamp.split('_');
+                    const dataFormatada = dataParte.split('-').reverse().join('/');
+                    const horaFormatada = horaParte.replace(/-/g, ':');
+                    
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${dataFormatada} ${horaFormatada}</td>
+                        <td><span class="badge bg-${registro.estado === 'LIGADO' ? 'success' : 'danger'}">${registro.estado}</span></td>
+                        <td>${registro.modo || 'N/A'}</td>
+                        <td>${registro.temperatura ? registro.temperatura.toFixed(1) + '°C' : 'N/A'}</td>
+                        <td>${registro.duracao || 'N/A'}</td>
+                    `;
+                    if (tbody) tbody.appendChild(tr);
+                } catch (e) {
+                    console.error("Erro ao processar registro:", timestamp, e);
+                }
+            });
+        } else {
+            if (emptyMsg) emptyMsg.style.display = 'block';
+        }
+    }).catch(error => {
+        console.error("Erro ao carregar histórico:", error);
+        if (emptyMsg) emptyMsg.style.display = 'block';
+    });
+}
+
+// Baixar histórico em CSV
+function baixarHistoricoVentilador() {
+    firebase.database().ref('ventilador/historico').once('value').then(snapshot => {
+        const data = snapshot.val();
+        if (!data || Object.keys(data).length === 0) {
+            exibirNotificacao('Nenhum histórico para baixar!', 'warning');
+            return;
+        }
+
+        // Formatar dados para CSV
+        const csvLines = ["Data,Hora,Estado,Modo,Temperatura (ºC),Duração"];
+        
+        Object.entries(data)
+            .sort((a, b) => b[0].localeCompare(a[0]))
+            .forEach(([timestamp, registro]) => {
+                try {
+                    const [dataParte, horaParte] = timestamp.split('_');
+                    const dataFormatada = dataParte.split('-').reverse().join('/');
+                    const horaFormatada = horaParte.replace(/-/g, ':');
+                    
+                    csvLines.push(
+                        `"${dataFormatada}","${horaFormatada}","${registro.estado}","${registro.modo || ''}",` +
+                        `"${registro.temperatura?.toFixed(1) || ''}","${registro.duracao || ''}"`
+                    );
+                } catch (e) {
+                    console.error("Erro ao formatar registro:", timestamp, e);
+                }
+            });
+
+        // Criar arquivo
+        const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `historico_ventilador_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+        exibirNotificacao('Download do histórico iniciado!', 'success');
+    }).catch(error => {
+        exibirNotificacao('Erro ao baixar histórico: ' + error.message, 'danger');
+    });
+}
+
+// Limpar histórico
+function limparHistoricoVentilador() {
+    if (confirm('Tem certeza que deseja apagar todo o histórico do ventilador? Esta ação é irreversível!')) {
+        firebase.database().ref('ventilador/historico').remove()
+            .then(() => {
+                exibirNotificacao('Histórico do ventilador limpo com sucesso!', 'success');
+                const tbody = document.getElementById('historicoVentiladorBody');
+                if (tbody) tbody.innerHTML = '';
+                const emptyMsg = document.getElementById('semHistoricoVentilador');
+                if (emptyMsg) emptyMsg.style.display = 'block';
+            })
+            .catch((error) => {
+                exibirNotificacao('Erro ao limpar histórico: ' + error.message, 'danger');
+            });
+    }
+}
+
+// Configurar event listeners quando o DOM estiver carregado
+document.addEventListener('DOMContentLoaded', () => {
+    // Elementos do DOM
+    const modoManualCheckbox = document.getElementById('modoManualVentilador');
+    const ligarBtn = document.getElementById('ligarVentiladorBtn');
+    const desligarBtn = document.getElementById('desligarVentiladorBtn');
+    const salvarConfigBtn = document.getElementById('salvarConfigVentiladorBtn');
+
+    // Verificar se os elementos existem antes de adicionar listeners
+    if (modoManualCheckbox) {
+        modoManualCheckbox.addEventListener('change', function() {
+            toggleControleManual(this.checked);
+        });
+    }
+    
+    if (ligarBtn) {
+        ligarBtn.addEventListener('click', function() {
+            firebase.database().ref('ventilador/estado').set(true)
+                .then(() => {
+                    exibirNotificacao('Ventilador ligado manualmente', 'success');
+                    atualizarStatusVentilador(true);
+                })
+                .catch(error => {
+                    exibirNotificacao('Erro ao ligar ventilador: ' + error.message, 'danger');
+                });
+        });
+    }
+    
+    if (desligarBtn) {
+        desligarBtn.addEventListener('click', function() {
+            firebase.database().ref('ventilador/estado').set(false)
+                .then(() => {
+                    exibirNotificacao('Ventilador desligado manualmente', 'success');
+                    atualizarStatusVentilador(false);
+                })
+                .catch(error => {
+                    exibirNotificacao('Erro ao desligar ventilador: ' + error.message, 'danger');
+                });
+        });
+    }
+    
+    if (salvarConfigBtn) {
+        salvarConfigBtn.addEventListener('click', function() {
+            const tempMax = parseFloat(document.getElementById('tempMaxVentilador')?.value);
+            const tempMinDesligar = parseFloat(document.getElementById('tempMinDesligar')?.value);
+            
+            if (isNaN(tempMax) || isNaN(tempMinDesligar)) {
+                exibirNotificacao('Insira valores numéricos válidos!', 'warning');
+                return;
+            }
+            
+            firebase.database().ref('alert_thresholds/estufa').update({
+                max: tempMax,
+                min: tempMinDesligar
+            }).then(() => {
+                exibirNotificacao('Configurações do ventilador salvas!', 'success');
+            }).catch(error => {
+                exibirNotificacao('Erro ao salvar configurações: ' + error.message, 'danger');
+            });
+        });
+    }
+});
+
+
+// Adicione esta função para registrar eventos do ventilador
+function registrarEventoVentilador(estado, temperatura) {
+    const agora = new Date();
+    const timestamp = `${agora.getFullYear()}-${(agora.getMonth()+1).toString().padStart(2,'0')}-${agora.getDate().toString().padStart(2,'0')}_${agora.getHours().toString().padStart(2,'0')}-${agora.getMinutes().toString().padStart(2,'0')}-${agora.getSeconds().toString().padStart(2,'0')}`;
+    
+    // Obter o último estado para calcular a duração
+    firebase.database().ref('ventilador/ultimoEvento').once('value').then(snapshot => {
+        const ultimoEvento = snapshot.val();
+        let duracao = 'N/A';
+        
+        if (ultimoEvento && ultimoEvento.estado !== estado && ultimoEvento.timestamp) {
+            // Calcular duração em minutos
+            const [dataParte, horaParte] = ultimoEvento.timestamp.split('_');
+            const [ano, mes, dia] = dataParte.split('-');
+            const [hora, minuto, segundo] = horaParte.split('-');
+            
+            const ultimaData = new Date(ano, mes-1, dia, hora, minuto, segundo);
+            duracao = ((agora - ultimaData) / 60000).toFixed(1) + ' min';
+        }
+        
+        // Registrar novo evento
+        const evento = {
+            estado: estado ? 'LIGADO' : 'DESLIGADO',
+            modo: document.getElementById('modoManualVentilador').checked ? 'MANUAL' : 'AUTOMATICO',
+            temperatura: temperatura || null,
+            duracao: duracao,
+            timestamp: timestamp
+        };
+        
+        // Salvar evento no histórico
+        firebase.database().ref(`ventilador/historico/${timestamp}`).set(evento);
+        
+        // Atualizar último evento
+        firebase.database().ref('ventilador/ultimoEvento').set(evento);
+    });
+}
+
+
+
+
+
+
+
+
+
+
+// Função para abrir o modal térmico
+// Modifique a função para debugar
+function abrirTermicoModal() {
+    try {
+        const modalElement = document.getElementById('termicoModal');
+        if (!modalElement) {
+            throw new Error('Elemento modal não encontrado');
+        }
+
+        // Carrega valores do Firebase (com fallback para localStorage)
+        firebase.database().ref('alert_thresholds').once('value')
+            .then((snapshot) => {
+                let config = snapshot.val();
                 
+                // Se não tiver no Firebase, tenta carregar do localStorage
+                if (!config) {
+                    const localConfig = localStorage.getItem('configTermica');
+                    if (localConfig) {
+                        config = JSON.parse(localConfig);
+                    } else {
+                        // Valores padrão
+                        config = {
+                            agua: { max: 28.0, min: 22.0 },
+                            estufa: { max: 30.0, min: 24.0 },
+                            externa: { max: 35.0, min: 18.0 }
+                        };
+                    }
+                }
 
+                // Preenche os campos
+                $('#maxAgua').val(config.agua?.max || 28.0);
+                $('#minAgua').val(config.agua?.min || 22.0);
+                $('#maxEstufa').val(config.estufa?.max || 30.0);
+                $('#minEstufa').val(config.estufa?.min || 24.0);
+                $('#maxExterno').val(config.externa?.max || 35.0);
+                $('#minExterno').val(config.externa?.min || 18.0);
 
+                // Abre o modal
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            })
+            .catch((error) => {
+                console.error("Erro ao carregar do Firebase:", error);
+                // Tenta carregar do localStorage em caso de erro
+                const localConfig = localStorage.getItem('configTermica');
+                if (localConfig) {
+                    const config = JSON.parse(localConfig);
+                    $('#maxAgua').val(config.maxAgua);
+                    $('#minAgua').val(config.minAgua);
+                    $('#maxEstufa').val(config.maxEstufa);
+                    $('#minEstufa').val(config.minEstufa);
+                    $('#maxExterno').val(config.maxExterno);
+                    $('#minExterno').val(config.minExterno);
+                    
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                } else {
+                    throw new Error('Não foi possível carregar as configurações');
+                }
+            });
 
+    } catch (error) {
+        console.error('Erro ao abrir modal térmico:', error);
+        mostrarNotificacao('Erro ao abrir configurações térmicas: ' + error.message, "danger");
+    }
+}
+// Função para validar as configurações térmicas
+function validarConfigTermica() {
+    // Obtém todos os valores
+    const maxAgua = parseFloat($('#maxAgua').val());
+    const minAgua = parseFloat($('#minAgua').val());
+    const maxEstufa = parseFloat($('#maxEstufa').val());
+    const minEstufa = parseFloat($('#minEstufa').val());
+    const maxExterno = parseFloat($('#maxExterno').val());
+    const minExterno = parseFloat($('#minExterno').val());
 
+    // Validação básica
+    if (isNaN(maxAgua) || isNaN(minAgua) || isNaN(maxEstufa) || 
+        isNaN(minEstufa) || isNaN(maxExterno) || isNaN(minExterno)) {
+        mostrarNotificacao("Preencha todos os campos com valores numéricos válidos!", "danger");
+        return false;
+    }
 
+    // Validação de faixas (mínimo < máximo)
+    if (minAgua >= maxAgua) {
+        mostrarNotificacao("Temperatura mínima da água deve ser menor que a máxima!", "danger");
+        return false;
+    }
 
-                
+    if (minEstufa >= maxEstufa) {
+        mostrarNotificacao("Temperatura mínima da estufa deve ser menor que a máxima!", "danger");
+        return false;
+    }
+
+    if (minExterno >= maxExterno) {
+        mostrarNotificacao("Temperatura mínima externa deve ser menor que a máxima!", "danger");
+        return false;
+    }
+
+    // Validações adicionais de limites físicos
+    if (maxAgua > 40 || minAgua < 10) {
+        mostrarNotificacao("Temperatura da água deve estar entre 10°C e 40°C!", "danger");
+        return false;
+    }
+
+    return true;
+}
+
+// Função para salvar as configurações térmicas
+function salvarConfigTermica() {
+    // Valida os dados antes de salvar
+    if (!validarConfigTermica()) {
+        return;
+    }
+
+    // Cria objeto com as configurações
+    const configTermica = {
+        agua: {
+            max: parseFloat($('#maxAgua').val()).toFixed(1),
+            min: parseFloat($('#minAgua').val()).toFixed(1)
+        },
+        estufa: {
+            max: parseFloat($('#maxEstufa').val()).toFixed(1),
+            min: parseFloat($('#minEstufa').val()).toFixed(1)
+        },
+        externa: {
+            max: parseFloat($('#maxExterno').val()).toFixed(1),
+            min: parseFloat($('#minExterno').val()).toFixed(1)
+        },
+        ultimaAtualizacao: new Date().toISOString()
+    };
+
+    // Salva no Firebase
+    firebase.database().ref('alert_thresholds').set(configTermica)
+        .then(() => {
+            // Salva também no localStorage como fallback
+            localStorage.setItem('configTermica', JSON.stringify(configTermica));
+            
+            // Fecha o modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('termicoModal'));
+            modal.hide();
+            
+            // Mostra notificação
+            mostrarNotificacao("Configurações térmicas salvas com sucesso!", "success");
+            
+            // Atualiza displays
+            atualizarDisplaysTermicos();
+        })
+        .catch((error) => {
+            console.error("Erro ao salvar no Firebase:", error);
+            mostrarNotificacao("Erro ao salvar configurações no banco de dados!", "danger");
+        });
+}
+// Função auxiliar para enviar para o servidor (AJAX)
+function enviarParaServidor(config) {
+    $.ajax({
+        url: '/api/config-termica',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(config),
+        success: function(response) {
+            console.log('Configurações térmicas salvas no servidor', response);
+        },
+        error: function(error) {
+            console.error('Erro ao salvar no servidor:', error);
+            // Pode adicionar uma notificação opcional aqui
+        }
+    });
+}
+
+// Função para atualizar displays que mostram as configurações
+function atualizarDisplaysTermicos() {
+    // Implementação específica do seu sistema
+    console.log('Atualizando displays térmicos...');
+    // Exemplo: $('#display-temp-agua').text(`${minAgua}°C - ${maxAgua}°C`);
+}
+
+// Função para mostrar notificações
+function mostrarNotificacao(mensagem, tipo) {
+    const notification = $('#notification');
+    notification.removeClass('alert-success alert-danger alert-warning')
+               .addClass(`alert-${tipo}`)
+               .text(mensagem)
+               .fadeIn();
+
+    setTimeout(() => {
+        notification.fadeOut();
+    }, 5000);
+}
+
     </script>
 </body>
 </html>
