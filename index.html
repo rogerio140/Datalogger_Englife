@@ -2635,42 +2635,30 @@ function validarConfigTermica() {
 
 // Função para salvar as configurações térmicas
 function salvarConfigTermica() {
-    // Valida os dados antes de salvar
-    if (!validarConfigTermica()) {
-        return;
-    }
+    if (!validarConfigTermica()) return;
 
-    // Cria objeto com as configurações
     const configTermica = {
         agua: {
-            max: parseFloat($('#maxAgua').val()).toFixed(1),
-            min: parseFloat($('#minAgua').val()).toFixed(1)
+            max: parseFloat($('#maxAgua').val()),
+            min: parseFloat($('#minAgua').val())
         },
         estufa: {
-            max: parseFloat($('#maxEstufa').val()).toFixed(1),
-            min: parseFloat($('#minEstufa').val()).toFixed(1)
+            max: parseFloat($('#maxEstufa').val()),
+            min: parseFloat($('#minEstufa').val())
         },
         externa: {
-            max: parseFloat($('#maxExterno').val()).toFixed(1),
-            min: parseFloat($('#minExterno').val()).toFixed(1)
+            max: parseFloat($('#maxExterno').val()),
+            min: parseFloat($('#minExterno').val())
         },
         ultimaAtualizacao: new Date().toISOString()
     };
 
-    // Salva no Firebase
     firebase.database().ref('alert_thresholds').set(configTermica)
         .then(() => {
-            // Salva também no localStorage como fallback
             localStorage.setItem('configTermica', JSON.stringify(configTermica));
-            
-            // Fecha o modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('termicoModal'));
             modal.hide();
-            
-            // Mostra notificação
             mostrarNotificacao("Configurações térmicas salvas com sucesso!", "success");
-            
-            // Atualiza displays
             atualizarDisplaysTermicos();
         })
         .catch((error) => {
@@ -2678,6 +2666,10 @@ function salvarConfigTermica() {
             mostrarNotificacao("Erro ao salvar configurações no banco de dados!", "danger");
         });
 }
+
+
+
+
 // Função auxiliar para enviar para o servidor (AJAX)
 function enviarParaServidor(config) {
     $.ajax({
